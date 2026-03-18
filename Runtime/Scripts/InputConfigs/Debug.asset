@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08bf3582949a8b94a95cadecfcf1bcc7, type: 3}
+  m_Name: Debug
+  m_EditorClassIdentifier: 
+  TriggerAction: {fileID: 0}
+  TriggerButton: {fileID: -292199561203151938, guid: c012a3715b918f346afe6be0c52d3694, type: 3}
+  ThumbAction: {fileID: 0}
+  ThumbButton: {fileID: 5999375214753856386, guid: c012a3715b918f346afe6be0c52d3694, type: 3}
+  AButton: {fileID: 8072280393657318113, guid: c012a3715b918f346afe6be0c52d3694, type: 3}
+  BButton: {fileID: -8341571994021144290, guid: c012a3715b918f346afe6be0c52d3694, type: 3}
+  PositionAction: {fileID: 5773694307088272614, guid: c012a3715b918f346afe6be0c52d3694, type: 3}
+  ScrollAction: {fileID: 6240969308177333660, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  RotationAction: {fileID: 0}
+  IsTrackedAction: {fileID: 0}
+  minTriggerValue: -1

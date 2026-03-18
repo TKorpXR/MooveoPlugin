@@ -1,0 +1,775 @@
+:root {
+    --glass-bg-top: rgba(255, 255, 255, 0.08);
+    --glass-bg-bottom: rgba(255, 255, 255, 0.01);
+    --border-bright: rgba(255, 255, 255, 0.4);
+    --border-dim: rgba(255, 255, 255, 0.1);
+    --text-color: rgb(238, 238, 238);
+    --radius-l: 30px;
+    --font-size-header: 32px;
+}
+
+.root-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.glass-panel {
+    background-color: rgba(40, 40, 40, 0.6);
+    border-radius: 40px;
+    border-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.4);
+    border-left-color: rgba(255, 255, 255, 0.2);
+    border-right-color: rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+    padding: 24px;
+}
+
+.header-text {
+    font-size: 32px;
+    color: white;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+}
+
+.sub-header {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 10px;
+}
+
+.icon {
+    width: 24px;
+    height: 24px;
+    -unity-background-image-tint-color: white;
+    -unity-background-scale-mode: scale-to-fit;
+    margin-right: 8px;
+}
+
+.icon-back {
+    background-image: url("project://database/Assets/Resources/Icons/arrow_back.png?fileID=21300000&guid=b2dd517d81cb63646bb58362267ee83b&type=3#arrow_back");
+}
+
+.icon-close {
+    background-image: url("project://database/Assets/Resources/Icons/close.png?fileID=21300000&guid=350765ca7783cec45855f7cdcc56f2b2&type=3#close");
+}
+
+.icon-brush {
+    background-image: url("project://database/Assets/Resources/Icons/brush.png?fileID=21300000&guid=e7db57489f6d02846bb0e12c93c00f37&type=3#brush");
+}
+
+.icon-undo {
+    background-image: url("project://database/Assets/Resources/Icons/undo.png?fileID=21300000&guid=7d1fc9f7827839f46a69cfcdba883505&type=3#undo");
+}
+
+.icon-check {
+    background-image: url("project://database/Assets/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
+}
+
+.icon-trash {
+    background-image: url("project://database/Assets/Resources/Icons/delete.png?fileID=21300000&guid=a00a54315705a114f9957186107e129a&type=3#delete");
+}
+
+.icon-gallery {
+    background-image: url("project://database/Assets/Resources/Icons/gallery.png?fileID=21300000&guid=aae597da5daf0304ba50d491fe3af55f&type=3#gallery");
+}
+
+.icon-banner {
+    background-image: url("project://database/Assets/Resources/Icons/banner.png?fileID=21300000&guid=ccdcd6502082ee6459552e4a2f92fb0b&type=3#banner");
+}
+
+.icon-preview {
+    background-image: url("project://database/Assets/Resources/Icons/eye.png?fileID=21300000&guid=33182ccb3513b1f4796672e22a6f3ef8&type=3#eye");
+}
+
+.icon-capture {
+    background-image: url("project://database/Assets/Resources/Icons/camera.png?fileID=21300000&guid=95a285c8479b354479a27570f269a075&type=3#camera");
+}
+
+.icon-folder {
+    background-image: url("project://database/Assets/Resources/Icons/folder.png?fileID=21300000&guid=916e1eb062697a04a9b7660a1be98dd5&type=3#folder");
+}
+
+.icon-print {
+    background-image: url("project://database/Assets/Resources/Icons/print.png?fileID=21300000&guid=b9fb8bf36630767478bf28f7cc4aaa53&type=3#print");
+}
+
+.icon-save {
+    background-image: url("project://database/Assets/Resources/Icons/save.png?fileID=21300000&guid=fa2ee5f200f74a6429bd08a91ed2beea&type=3#save");
+}
+
+.icon-refresh {
+    background-image: resource("Icons/refresh");
+}
+.icon-color-picker {
+    background-image: url("project://database/Assets/Resources/Icons/palette.png?fileID=21300000&guid=b91d80ac8fee6e747a40ecbb843acdc6&type=3#palette");
+}
+
+.vision-icon-button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0);
+    border-width: 0;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    transition-duration: 0.2s;
+}
+
+.vision-icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    scale: 1.1;
+}
+
+.vision-icon-button:active {
+    background-color: rgba(255, 255, 255, 0.4);
+    scale: 0.95;
+}
+
+.vision-icon-button .icon {
+    width: 28px;
+    height: 28px;
+    margin-right: 0;
+    -unity-background-image-tint-color: white;
+}
+
+.button-primary {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.button-destructive {
+    background-color: rgba(255, 69, 58, 0.2);
+}
+
+.button-destructive:hover {
+    background-color: rgba(255, 69, 58, 0.4);
+}
+
+.segmented-control {
+    background-color: rgba(118, 118, 128, 0.24);
+    border-radius: 9px;
+    padding: 2px;
+    flex-direction: row;
+}
+
+.top-tab-button {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 7px;
+    color: rgb(255, 255, 255);
+    font-size: 14px;
+    min-width: 100px;
+    height: 32px;
+    margin: 0;
+    -unity-font-style: normal;
+    transition-duration: 0.1s;
+}
+
+.top-tab-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.top-tab-button.active {
+    background-color: rgb(255, 255, 255);
+    color: rgb(0, 0, 0);
+    -unity-font-style: bold;
+}
+
+.sidebar-container {
+    width: auto;
+    min-width: 100px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.sidebar-panel-container {
+    width: 280px;
+    border-right-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.icon-gallery {
+    background-image: url("project://database/Assets/Resources/Icons/gallery.png?fileID=21300000&guid=aae597da5daf0304ba50d491fe3af55f&type=3#gallery");
+}
+
+.icon-banner {
+    background-image: url("project://database/Assets/Resources/Icons/banner.png?fileID=21300000&guid=ccdcd6502082ee6459552e4a2f92fb0b&type=3#banner");
+}
+
+.icon-preview {
+    background-image: url("project://database/Assets/Resources/Icons/eye.png?fileID=21300000&guid=33182ccb3513b1f4796672e22a6f3ef8&type=3#eye");
+}
+
+.icon-capture {
+    background-image: url("project://database/Assets/Resources/Icons/camera.png?fileID=21300000&guid=95a285c8479b354479a27570f269a075&type=3#camera");
+}
+
+.icon-folder {
+    background-image: url("project://database/Assets/Resources/Icons/folder.png?fileID=21300000&guid=916e1eb062697a04a9b7660a1be98dd5&type=3#folder");
+}
+
+.sidebar-button {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background-color: transparent;
+    transition-duration: 0.2s;
+    margin-bottom: 8px;
+    min-width: 0;
+}
+
+.sidebar-button:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    scale: 1.05;
+    border-color: rgba(255, 255, 255, 0.5);
+    border-width: 1px;
+}
+
+.sidebar-button.active,
+.sidebar-button:active {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+}
+
+.grid-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 0;
+    padding-right: 0;
+    gap: 20px;
+}
+
+.grid-item {
+    width: 200px;
+    max-width: 240px;
+    flex-grow: 1;
+    height: 160px;
+    margin: 0;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-width: 0;
+    transition-duration: 0.15s;
+}
+
+.brush-settings-grid-item {
+    width: 160px;
+    height: 160px;
+    margin: 0;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-width: 0;
+    transition-duration: 0.15s;
+}
+
+.brush-settings-grid-item:hover,
+.grid-item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    scale: 1.05;
+}
+
+.brush-settings-grid-item.selected,
+.grid-item.selected {
+    border-width: 3px;
+    border-color: rgb(255, 255, 255);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+}
+
+#unified-root {
+    min-height: 600px;
+}
+
+.content-area-base {
+    opacity: 0;
+    scale: 0.95;
+    transform-origin: center left;
+    transition-property: opacity, scale;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-out-back;
+    pointer-events: none;
+}
+
+.content-visible {
+    opacity: 1;
+    scale: 1;
+    display: flex;
+    margin-left: 20px;
+    pointer-events: auto;
+}
+
+.fade-content {
+    transition: opacity 0.2s ease-in-out;
+    opacity: 1;
+}
+
+.fade-content-hidden {
+    opacity: 0;
+}
+
+.drag-handle {
+    width: 140px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    position: absolute;
+    bottom: -60px;
+    align-self: center;
+}
+
+.drag-handle:hover {
+    background-color: rgba(255, 255, 255, 0.6);
+    height: 8px;
+}
+
+.brush-item {
+    width: 120px;
+    height: 120px;
+    margin-right: 10px;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-width: 0;
+    flex-shrink: 0;
+    transition-duration: 0.1s;
+}
+
+.brush-item:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    scale: 1.05;
+}
+
+.brush-item.selected {
+    border-width: 2px;
+    border-color: rgb(10, 132, 255);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.brush-item .preview-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+#palette-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: 10px;
+}
+
+.color-item {
+    margin-right: 0.5%;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    box-sizing: border-box;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    transition-duration: 0.1s;
+}
+
+.color-item:hover {
+    scale: 1.15;
+    z-index: 10;
+    border-color: white;
+    border-width: 2px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.color-item.selected {
+    border-color: rgb(10, 132, 255);
+    border-width: 3px;
+    scale: 1.05;
+    z-index: 5;
+}
+
+#stickers-list-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 10px;
+}
+
+.sticker-item {
+    width: 100px;
+    height: 100px;
+    margin: 10px;
+    border-radius: 16px;
+    background-color: rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+    flex-grow: 0;
+    -unity-background-scale-mode: scale-to-fit;
+    transition-duration: 0.1s;
+}
+
+.sticker-item:hover {
+    scale: 1.05;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+#background-list-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 10px;
+}
+
+.background-item {
+    width: 220px;
+    height: 124px;
+    margin: 10px;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-width: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    -unity-background-scale-mode: scale-to-fill;
+    transition-duration: 0.1s;
+    transition-property: scale, background-color, border-color;
+}
+
+.background-item:hover {
+    scale: 1.05;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.vision-radio-classic {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.vision-radio-classic .unity-radio-button {
+    margin-right: 30px;
+    margin-bottom: 15px;
+    padding: 10px;
+    align-items: center;
+    background-color: transparent;
+}
+
+.vision-radio-classic .unity-radio-button__checkmark-background {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    border-width: 3px;
+    border-color: rgb(255, 255, 255);
+    background-color: transparent;
+    margin-right: 15px;
+}
+
+.vision-radio-classic .unity-radio-button__checkmark {
+    display: none;
+    width: 0;
+    height: 0;
+    background-image: none;
+    -unity-background-image-tint-color: transparent;
+}
+
+.vision-radio-classic .unity-radio-button__text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 24px;
+    margin: 0;
+    padding: 0;
+}
+
+.vision-radio-classic .unity-radio-button:checked .unity-radio-button__checkmark-background {
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(255, 255, 255);
+    background-image: none;
+}
+
+.vision-radio-classic .unity-radio-button:checked .unity-radio-button__text {
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+}
+
+.vision-radio-classic .unity-radio-button:hover .unity-radio-button__text {
+    color: rgb(221, 221, 221);
+}
+
+.vision-radio-classic .unity-radio-button:hover .unity-radio-button__checkmark-background {
+    border-color: rgb(221, 221, 221);
+}
+
+.control-pad {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 150px;
+    justify-content: center;
+    align-self: center;
+    gap: 5px;
+    margin-bottom: 20px;
+}
+
+.control-button-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    align-items: center;
+    justify-content: center;
+    border-width: 0;
+    transition-duration: 0.1s;
+}
+
+.control-button-small:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    scale: 1.1;
+}
+
+.control-button-small:active {
+    background-color: rgba(255, 255, 255, 0.5);
+    scale: 0.95;
+}
+
+.counter-display {
+    color: rgb(255, 255, 255);
+    font-size: 24px;
+    -unity-font-style: bold;
+    min-width: 50px;
+    -unity-text-align: middle-center;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border-width: 4px;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-top-color: rgb(10, 132, 255);
+    border-left-color: rgb(10, 132, 255);
+}
+
+/* Calibration UI Styles */
+
+.device-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 60px;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-bottom: 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.device-name {
+    font-size: 20px;
+    color: rgb(220, 220, 220);
+}
+
+.status-icon {
+    width: 32px;
+    height: 32px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.icon-status-ok {
+    background-image: url("project://database/Assets/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
+    -unity-background-image-tint-color: rgb(46, 204, 113);
+}
+
+.icon-status-loading {
+    /* Spinner style is handled by .spinner class usually, but if we use an icon: */
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border-width: 3px;
+    border-color: rgba(255, 255, 255, 0.2);
+    border-top-color: white;
+    /* Rotation needs to be handled in C# or via unity simpler animation if possible, or just use the .spinner class */
+}
+
+/* Calibration Points */
+.calibration-point {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+    /* Border handled by C# drawing */
+    background-color: rgba(0, 0, 0, 0.2);
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+
+.calibration-point-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}
+
+.calibration-point-icon {
+    width: 40px;
+    height: 40px;
+    opacity: 0;
+    -unity-background-scale-mode: scale-to-fit;
+    background-image: url("project://database/Assets/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
+    -unity-background-image-tint-color: rgb(46, 204, 113);
+}
+
+.calibration-point.valid {
+    border-color: rgb(46, 204, 113);
+}
+.calibration-point.error {
+
+    border-color: rgb(255, 91, 83);
+}
+.calibration-point.error .calibration-point-icon {
+    background-image: url("project://database/Assets/Resources/Icons/close.png?fileID=21300000&guid=350765ca7783cec45855f7cdcc56f2b2&type=3#close");
+    -unity-background-image-tint-color: rgb(231, 76, 60);
+    opacity: 1;
+}
+
+.calibration-point.valid .calibration-point-fill {
+    /* No scale or bg color needed, drawing handles it */
+}
+
+/* Validation Buttons */
+.btn-action-green {
+    width: 200px;
+    height: 80px;
+    border-radius: 40px;
+    background-color: rgb(46, 204, 113);
+    font-size: 24px;
+    color: white;
+    -unity-font-style: bold;
+    border-width: 0;
+    transition-duration: 0.2s;
+}
+
+.btn-action-green:hover {
+    scale: 1.05;
+    background-color: rgb(39, 174, 96);
+}
+
+.btn-action-red {
+    width: 200px;
+    height: 80px;
+    border-radius: 40px;
+    background-color: rgb(231, 76, 60);
+    font-size: 24px;
+    color: white;
+    -unity-font-style: bold;
+    border-width: 0;
+    transition-duration: 0.2s;
+}
+
+.btn-action-red:hover {
+    scale: 1.05;
+    background-color: rgb(192, 57, 43);
+}
+
+.btn-action-blue {
+    width: 200px;
+    height: 80px;
+    border-radius: 40px;
+    background-color: rgb(10, 132, 255);
+    font-size: 24px;
+    color: white;
+    -unity-font-style: bold;
+    border-width: 0;
+    transition-duration: 0.2s;
+}
+
+.btn-action-blue:hover {
+    scale: 1.05;
+    background-color: rgb(0, 110, 255);
+}
+
+.icon-cube-green {
+    /* Placeholder for the cube icon if not available, simply a colored box or use a known icon */
+     background-image: url("project://database/Assets/Resources/Icons/box.png?fileID=21300000&guid=fakeguid&type=3#box"); /* Use generic if specific not found */
+     -unity-background-object-fit: cover;
+}
+
+/* Animations & Transitions Refactor */
+.animated-panel {
+    transition-property: opacity, scale;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-out-cubic;
+    opacity: 1;
+    scale: 1;
+    pointer-events: auto; /* Réactive les clics quand visible */
+}
+
+.animated-panel--hidden {
+    opacity: 0;
+    scale: 0.95; /* Léger effet de recul quand ça disparaît */
+    pointer-events: none; /* TRÈS IMPORTANT : Empêche de cliquer sur un panneau invisible */
+}
+
+/* Fix for Unity UI Toolkit: pointer-events must be explicitly none on children too if they have defaults */
+.animated-panel--hidden > * {
+    pointer-events: none;
+}
+
+
+/* Cascade Animation for Validation Buttons */
+.animated-panel .btn-action-blue,
+.animated-panel .btn-action-red,
+.animated-panel .btn-action-green {
+    transition-property: scale, background-color, opacity, translate;
+    opacity: 1;
+    translate: 0 0;
+}
+
+.animated-panel--hidden .btn-action-blue,
+.animated-panel--hidden .btn-action-red,
+.animated-panel--hidden .btn-action-green {
+    opacity: 0;
+    translate: 0 20px;
+}
+
+.animated-panel .btn-action-blue { transition-delay: 0.05s; }
+.animated-panel .btn-action-red { transition-delay: 0.1s; }
+.animated-panel .btn-action-green { transition-delay: 0.15s; }
+
+

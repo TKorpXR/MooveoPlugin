@@ -1,0 +1,60 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="VisionOS.uss" />
+    
+    <ui:VisualElement name="root" class="root-container">
+        
+        <!-- Panel 1: Checking Devices -->
+        <ui:VisualElement name="pnl-checking-devices" class="glass-panel animated-panel" style="width: 600px; height: 500px; align-items: center; justify-content: flex-start;">
+            <!-- Header removed or kept empty to match "clean" look if checking devices list is self-sufficient, 
+                 but keeping a container for the list. 
+                 Screenshots show a list in void, but we use a glass panel as requested locally or just a container. 
+                 User request said: "Utilise .glass-panel." for Checking Devices. -->
+             
+            <ui:ScrollView name="devices-list" style="width: 100%; height: 100%;" />
+            <ui:Label name="lbl-press-a" text="Appuyez sur 'A' pour continuer" style="margin-top: 20px; font-size: 24px; color: rgb(46, 204, 113); -unity-font-style: bold;" />
+        </ui:VisualElement>
+
+        <!-- Panel 2: Calibration Overlay (Fullscreen) -->
+        <ui:VisualElement name="pnl-calibration-overlay" class="animated-panel" style="position: absolute; width: 100%; height: 100%;">
+            <ui:Label name="lbl-instruction" text="Press trigger one time in the circle to calibrate" class="sub-header" style="position: absolute; top: 30%; width: 100%; -unity-text-align: middle-center;" />
+     
+            <ui:VisualElement name="calibration-marks-container" style="position: absolute; width: 100%; height: 100%;" />
+        </ui:VisualElement>
+
+        <!-- Panel 3: Validation Footer -->
+        <ui:VisualElement name="pnl-validation-footer" class="animated-panel" style="position: absolute; top: 50px; flex-direction: row; gap: 40px;">
+            <ui:Button name="btn-refine" text="Refine" class="btn-action-blue" />
+            <ui:Button name="btn-start-over" text="Start Over" class="btn-action-red" />
+            <ui:Button name="btn-validate" text="Validate" class="btn-action-green" />
+        </ui:VisualElement>
+
+        <!-- Panel 4: Popup Launch -->
+        <ui:VisualElement name="pnl-popup-launch" class="animated-panel" style="position: absolute; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;">
+            <ui:VisualElement class="glass-panel" style="padding: 40px; align-items: center; width: 550px; max-width: 90%;">
+        
+                <ui:Label text="LAUNCHING" class="sub-header" style="margin-bottom: 20px; opacity: 0.7; font-size: 14px; letter-spacing: 2px;" />
+                <ui:VisualElement style="height: 1px; width: 100%; background-color: rgba(255,255,255,0.1); margin-bottom: 30px;" />
+
+                <ui:VisualElement style="width: 60px; height: 60px; background-color: rgba(46, 204, 113, 0.2); border-radius: 12px; margin-bottom: 20px; justify-content: center; align-items: center; border-width: 1px; border-color: rgba(46, 204, 113, 0.5);">
+                    <ui:VisualElement class="icon-status-ok" style="width: 30px; height: 30px;" />
+                </ui:VisualElement>
+        
+                <ui:Label text="Calibration Found" class="header-text" style="font-size: 24px; margin-bottom: 10px;" />
+                <ui:Label text="Do you want to launch the game or recalibrate?" class="sub-header" style="white-space: normal; -unity-text-align: middle-center; margin-bottom: 40px; font-size: 16px;" />
+
+                <ui:VisualElement style="flex-direction: row; gap: 20px; width: 100%; justify-content: center; flex-shrink: 0;">
+            
+                    <ui:Button name="btn-popup-recalibrate" class="sidebar-button" style="flex-grow: 1; flex-shrink: 1; width: auto; justify-content: center; background-color: rgba(231, 76, 60, 0.2); margin-bottom: 0;">
+                        <ui:Label text="Recalibrate" style="color: rgb(255, 100, 100); pointer-events: none;" />
+                    </ui:Button>
+                    
+                    <ui:Button name="btn-popup-launch" class="sidebar-button" style="flex-grow: 1; flex-shrink: 1; width: auto; justify-content: center; background-color: rgba(46, 204, 113, 0.2); margin-bottom: 0;">
+                        <ui:Label text="Launch" style="color: rgb(46, 204, 113); -unity-font-style: bold; pointer-events: none;" />
+                    </ui:Button>
+                    
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,31 @@
+{
+  "name": "com.bl0bli.mooveo",
+  "version": "1.0.0",
+  "displayName": "Mooveo SDK",
+  "description": "Système de tracking et calibration pour espaces interactifs 2D/3D.",
+  "unity": "2021.3",
+  "unityRelease": "21f1",
+  "documentationUrl": "https://github.com/bl0bli/mooveo",
+  "dependencies": {
+    "com.unity.inputsystem": "1.7.0",
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.xr.management": "4.4.0",
+    "com.unity.xr.interaction.toolkit": "2.5.2",
+    "com.unity.xr.openxr": "1.10.0",
+    "com.dbrizov.naughtyattributes": "https://github.com/dbrizov/NaughtyAttributes.git#upm"
+  },
+  "keywords": [
+    "vr",
+    "tracking",
+    "calibration",
+    "xr",
+    "interaction",
+    "2d",
+    "3d",
+    "controllers"
+  ],
+  "author": {
+    "name": "Enzo Bossé",
+    "email": "bosseenzo6@gmail.com"
+  }
+}

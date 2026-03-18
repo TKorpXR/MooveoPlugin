@@ -1,0 +1,114 @@
+{
+    "name": "Debug",
+    "maps": [
+        {
+            "name": "MouseKeyboard",
+            "id": "b816d0db-e235-4248-b0b3-62e528e2137e",
+            "actions": [
+                {
+                    "name": "pos",
+                    "type": "Value",
+                    "id": "447bad8b-fd09-4498-9a4a-a457cf947b13",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "leftclick",
+                    "type": "Button",
+                    "id": "3d2e9043-1a7c-4693-913f-3a2b0a57f5a2",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "righclick",
+                    "type": "Button",
+                    "id": "2786f9b4-7f1a-4bbe-97fe-d0bb0fbf0540",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "abutton",
+                    "type": "Button",
+                    "id": "9815c38a-2d42-4380-8582-5c69ab058a51",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "bbutton",
+                    "type": "Button",
+                    "id": "73ece135-0f6f-4415-aa1f-b73912759c8e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "7610dc4d-c25f-48c9-87c6-23a34903fba7",
+                    "path": "<Mouse>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "pos",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9ccc758e-7b9c-4cd1-bb60-f1efea16f5d5",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "leftclick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "363f9890-15cb-45e6-90e7-e6910db4a608",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "righclick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f8964a86-e341-4fe7-b85f-e7b301096d9e",
+                    "path": "<Mouse>/forwardButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "abutton",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a844d5f4-d0d8-4897-afe6-83e45abde9ec",
+                    "path": "<Mouse>/backButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "bbutton",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

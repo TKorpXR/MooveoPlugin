@@ -1,0 +1,24 @@
+{
+    "name": "Mooveo.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Mooveo.Runtime",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro",
+        "Unity.XR.Management",
+        "Unity.XR.Interaction.Toolkit",
+        "Unity.XR.OpenXR",
+        "NaughtyAttributes"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

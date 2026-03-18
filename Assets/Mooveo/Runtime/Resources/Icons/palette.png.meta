@@ -1,0 +1,46 @@
+PlayerInputs
+	- bool left
+	- bool right
+	- bool top
+	- bool bottom
+	- bool shoot
+
+PlayerData
+	- byte playerIndex
+	- Vector2 position
+	- byte GunType
+
+ProjectileData
+	- short id
+	- byte GunType
+	- Vector2 position
+
+GunData
+	- short id
+	- byte GunType
+	- Vector2 position
+
+PlayerNamePacket
+	- string name;
+
+PlayerInputPacker
+	- PlayerInputs
+
+PlayersPositionPacket
+	- PlayerData[] players
+
+ProjectileSpawnPacket
+	- ProjectileData
+
+ProjectilesPositionPacket
+	- ProjectileData[]
+
+ProjectileDestroyPacket
+	- ProjectileData
+
+SpawnGunPacket
+	- GunData
+
+PickUpGunPacket
+	- GunData
+	- byte playerIndex

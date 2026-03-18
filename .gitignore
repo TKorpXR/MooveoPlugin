@@ -1,16 +1,54 @@
-# This .gitignore file should be placed at the root of your Unity project directory
-#
-# Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
-#
-.utmp/
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
+# Unity Package Manager Git Ignore
+# For UPM packages distributed via Git
+
+# Unity generated files
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
 *.log
+
+# Visual Studio / MonoDevelop files
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vs/
+.idea/
+*.DotSettings.user
+
+# Build outputs
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# Package manager cache
+/PackageCache/
+/packages-lock.json
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
