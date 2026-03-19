@@ -532,6 +532,15 @@ MonoBehaviour:
   _deltaPointsVerification: 0.025
   _transformTestReference: {fileID: 1459706260}
   _camera: {fileID: 163330658}
+  _devicesToCheck:
+  - Key: SteamVR
+    Label: SteamVR
+    Type: 4
+    RequiresExe: 1
+  - Key: AnyController
+    Label: AnyController
+    Type: 3
+    RequiresExe: 1
   _debugSlider: {fileID: 0}
 --- !u!1 &1873943182
 GameObject:

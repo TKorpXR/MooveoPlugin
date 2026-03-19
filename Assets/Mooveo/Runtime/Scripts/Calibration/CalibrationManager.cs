@@ -26,6 +26,25 @@ using Vector3 = UnityEngine.Vector3;
 /// Cette classe est conçue pour être étendue (méthodes virtuelles <see cref="SetupPlayArea"/> et <see cref="SetupCamera"/>)
 /// afin de définir le comportement spécifique à l'application pour la configuration du play area et de la caméra.
 /// </summary>
+///
+public enum EDeviceCheckerType //Si on créer une nouvelle class héritant de IDeviceChecker il faut l'ajouter a l'enum
+{ 
+    HMD, 
+    LeftController, 
+    RightController, 
+    AnyController,
+    SteamVR, 
+    EosUtility, 
+    HotFolder 
+}
+[Serializable]
+public class DeviceCheckerConfig
+{
+    public string Key;
+    public string Label;
+    public EDeviceCheckerType Type;
+    public bool RequiresExe;
+}
 public class CalibrationManager : MonoBehaviour
 {
     [SerializeField] private Popup _doesLaunchPopup;
@@ -37,6 +56,16 @@ public class CalibrationManager : MonoBehaviour
     [SerializeField] private float _deltaPointsVerification = 0.025f;
     [SerializeField] private Transform _transformTestReference;
     [SerializeField] Camera _camera;
+    
+    [Header("Device Checking Settings")]
+    [SerializeField] private List<DeviceCheckerConfig> _devicesToCheck = new List<DeviceCheckerConfig>();
+    private Dictionary<DeviceCheckerConfig, IDeviceChecker> _activeCheckers = new Dictionary<DeviceCheckerConfig, IDeviceChecker>();
+
+    // Événements pour piloter l'UI sans qu'elle ne connaisse la logique
+    public event Action<List<DeviceCheckerConfig>> OnInitDevicesUI;
+    public event Action<string, string, bool, string> OnUpdateDeviceUI; // Key, Label, IsConnected, ExePath
+    public event Action OnAllDevicesReady;
+    
     private List<Vector3> _points = new List<Vector3>();
     private List<Vector3> _normals = new List<Vector3>();
 
@@ -93,16 +122,12 @@ public class CalibrationManager : MonoBehaviour
     public virtual void Init()
     {
         _needCalibration = DoesNeedCalibration();
-        if(UICalibrationToolkit.instance) 
-        {
-            UICalibrationToolkit.instance.OnDevicesChecked += b => _devicesChecked = b;
-            UICalibrationToolkit.instance.StartCheckingDevices();
-        }
-        
-        //if(UICalibrationManager.instance) UICalibrationManager.instance.OnDevicesChecked += b => _devicesChecked = b;
-        
+        InitCheckers();
+        OnInitDevicesUI?.Invoke(_devicesToCheck);
+        StartCoroutine(CheckDevicesLogicLoop());
         _config = MooveoConfigManager.Load();
     }
+    
 
     public void OpenPopupLaunching()
     {
@@ -155,7 +180,44 @@ public class CalibrationManager : MonoBehaviour
             UICalibrationToolkit.instance.StartMainFlow(_nPointsToCalibrate);
         }
     }
+    
+    public bool AreControllersConnected()
+    {
+        //if (GlobalSettings.Core.GlobalSettings.Instance.UseViveTracker.Value) return true;
 
+        bool leftConnected = false;
+        bool rightConnected = false;
+
+        // On parcourt les checkers actifs pour voir si une manette est là
+        foreach (var kvp in _activeCheckers)
+        {
+            if (kvp.Key.Type == EDeviceCheckerType.LeftController) leftConnected = kvp.Value.IsConnected();
+            if (kvp.Key.Type == EDeviceCheckerType.RightController) rightConnected = kvp.Value.IsConnected();
+            if (kvp.Key.Type == EDeviceCheckerType.AnyController && kvp.Value.IsConnected()) return true;
+        }
+
+        return leftConnected || rightConnected;
+    }
+
+    private void InitCheckers()
+    {
+        _activeCheckers.Clear();
+        foreach (var config in _devicesToCheck)
+        {
+            IDeviceChecker checker = null;
+            switch (config.Type)
+            {
+                case EDeviceCheckerType.HMD: checker = new HMDChecker(); break;
+                case EDeviceCheckerType.LeftController: checker = new LeftControllerChecker(); break;
+                case EDeviceCheckerType.RightController: checker = new RightControllerChecker(); break;
+                case EDeviceCheckerType.AnyController: checker = new AnyControllerChecker(); break;
+                case EDeviceCheckerType.SteamVR: checker = new SteamVRChecker(); break;
+                case EDeviceCheckerType.EosUtility: checker = new EosUtilitychecker(); break;
+                case EDeviceCheckerType.HotFolder: checker = new HotFolderChecker(); break;
+            }
+            if (checker != null) _activeCheckers.Add(config, checker);
+        }
+    }
     private bool DoesNeedCalibration()
     {
         if (!MooveoConfigManager.Exists()) return true;
@@ -176,7 +238,62 @@ public class CalibrationManager : MonoBehaviour
 
         return false;
     }
+    
+    private IEnumerator CheckDevicesLogicLoop()
+    {
+        bool allDevicesValid = false;
 
+        while (!allDevicesValid)
+        {
+            allDevicesValid = true;
+
+            foreach (var kvp in _activeCheckers)
+            {
+                var config = kvp.Key;
+                var checker = kvp.Value;
+                
+                bool isConnected = checker.IsConnected();
+                string exePath = "";
+
+                // Gestion de l'EXE uniquement si demandé
+                if (!isConnected && config.RequiresExe)
+                {
+                    exePath = GetExePathForType(config.Type);
+                    if (!string.IsNullOrEmpty(exePath) && !AppLauncher.IsProcessLaunched(exePath))
+                    {
+                        AppLauncher.LaunchProcess(exePath);
+                    }
+                }
+
+                // On envoie l'état actuel à l'UI
+                OnUpdateDeviceUI?.Invoke(config.Key, config.Label, isConnected, exePath);
+
+                if (!isConnected) allDevicesValid = false;
+
+                yield return new WaitForSeconds(0.5f); // Petit délai entre chaque check
+            }
+
+            if (!allDevicesValid) yield return new WaitForSeconds(1f);
+        }
+
+        // Si on sort de la boucle, tout est connecté !
+        _devicesChecked = true;
+        OnAllDevicesReady?.Invoke();
+    }
+
+    private string GetExePathForType(EDeviceCheckerType type)
+    {
+        // On récupère le chemin depuis tes GlobalSettings
+        var gs = GlobalSettings.Core.GlobalSettings.Instance;
+        switch (type)
+        {
+            case EDeviceCheckerType.SteamVR: return gs.SteamVREXEPath.Value;
+            case EDeviceCheckerType.EosUtility: return gs.EosUtilityEXEPath.Value;
+            case EDeviceCheckerType.HotFolder: return gs.HotFolderEXEPath.Value;
+            default: return "";
+        }
+    }
+    
     public void StartOverCalibration()
     {
         // On s'assure de se désabonner de l'action de lancement si elle est toujours active

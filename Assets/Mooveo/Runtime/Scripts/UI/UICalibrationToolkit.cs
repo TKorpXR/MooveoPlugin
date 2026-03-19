@@ -46,7 +46,6 @@ public class UICalibrationToolkit : MonoBehaviour
     private CalibrationController _tester;
     private Coroutine _mainFlowRoutine;
     private Coroutine _secondaryFlowRoutine;
-    private Dictionary<string, IDeviceChecker> _devices = new Dictionary<string, IDeviceChecker>();
     private bool _allDevicesValid = false;
     private bool _calibratingStep = false;
     private bool _controllerClicked = false;
@@ -79,21 +78,27 @@ public class UICalibrationToolkit : MonoBehaviour
         {
             InitializeUI();
         }
+        
+        if (CalibrationManager.instance != null)
+        {
+            CalibrationManager.instance.OnInitDevicesUI += BuildDevicesList;
+            CalibrationManager.instance.OnUpdateDeviceUI += UpdateDeviceStatusUI;
+            CalibrationManager.instance.OnAllDevicesReady += HandleAllDevicesReady;
+        }
     }
 
     private void OnDisable()
     {
         UnsubscribeFromCalibrationEvents();
+        if (CalibrationManager.instance != null)
+        {
+            CalibrationManager.instance.OnInitDevicesUI -= BuildDevicesList;
+            CalibrationManager.instance.OnUpdateDeviceUI -= UpdateDeviceStatusUI;
+            CalibrationManager.instance.OnAllDevicesReady -= HandleAllDevicesReady;
+        }
     }
     private void Start()
     {
-        _devices.Add("hmd", new HMDChecker());
-        _devices.Add("leftController", new LeftControllerChecker());
-        _devices.Add("rightController", new RightControllerChecker());
-        _devices.Add("steam", new SteamVRChecker());
-        _devices.Add("eos", new EosUtilitychecker());
-        _devices.Add("hotfolder", new HotFolderChecker());
-        
         AnimateSpinners();
     }
 
@@ -321,96 +326,17 @@ public class UICalibrationToolkit : MonoBehaviour
             StopAllFlows();
             ClearCalibrationUIData();
             _nPointToCalibrate = nPointToCalibrate;
-            _mainFlowRoutine = StartCoroutine(MainFlow(3f));
-        }
-        private IEnumerator MainFlow(float seconds)
-        {
-            yield return StartCoroutine(CheckAllDevicesLoop(seconds, false));
-            
-            yield return StartCoroutine(CalibrationLoop());
-            
-            //Debug.Log("MainFlow -> Sequence finished. Waiting for user UI interaction (Validate/Refine).");
-        }
-        private IEnumerator SecondaryFlow(float seconds)
-        {
-            yield return StartCoroutine(CheckAllDevicesLoop(seconds, true));
+            _mainFlowRoutine = StartCoroutine(CalibrationLoop());
         }
         public void StartCheckingDevices()
         {
             StopAllFlows();
-            _secondaryFlowRoutine = StartCoroutine(SecondaryFlow(3f));
-        }
-        private IEnumerator CheckAllDevicesLoop(float seconds, bool triggerProceed)
-        {
-            ShowPanel(_pnlCheckingDevices);
-    
-            var lblPressA = _rootOverlay.Q<Label>("lbl-press-a");
-            if(lblPressA != null) lblPressA.visible = false;
-    
-            _allDevicesValid = false;
-            
-            RebuildDevicesList();
-    
-            while (!_allDevicesValid)
+            if (CalibrationManager.instance != null)
             {
-                float fakeDelay = 0.7f;
-    
-                UpdateDeviceStatusUI("steam", "SteamVR", GlobalSettings.Core.GlobalSettings.Instance.SteamVREXEPath.Value);
-                yield return new WaitForSeconds(fakeDelay);
-    
-                UpdateDeviceStatusUI("hmd", "HMD", "");
-                yield return new WaitForSeconds(fakeDelay);
-                
-                // Controller Logic Merged
-                bool leftOK = _devices["leftController"].IsConnected();
-                bool rightOK = _devices["rightController"].IsConnected();
-                bool anyControllerOK = leftOK || rightOK;
-                UpdateCombinedDeviceStatusUI("anyController", "Controllers", anyControllerOK);
-                yield return new WaitForSeconds(fakeDelay);
-                
-                UpdateDeviceStatusUI("eos", "EOS Utility", GlobalSettings.Core.GlobalSettings.Instance.EosUtilityEXEPath.Value);
-                yield return new WaitForSeconds(fakeDelay);
-    
-                UpdateDeviceStatusUI("hotfolder", "Hot Folder", GlobalSettings.Core.GlobalSettings.Instance.HotFolderEXEPath.Value); 
-                yield return new WaitForSeconds(fakeDelay);
-                
-                 bool steamOK = _devices["steam"].IsConnected();
-                 bool hmdOK = _devices["hmd"].IsConnected();
-                 bool eosOK = _devices["eos"].IsConnected();
-                 bool hotFolderOK = _devices["hotfolder"].IsConnected();
-    
-                 _allDevicesValid = (steamOK && hmdOK && anyControllerOK && eosOK && hotFolderOK);
-    
-                 if (_allDevicesValid)
-                 {
-                     UpdateDeviceStatusUI("steam", "SteamVR", "");
-                     UpdateDeviceStatusUI("hmd", "HMD", "");
-                     UpdateCombinedDeviceStatusUI("anyController", "Controllers", anyControllerOK);
-                     UpdateDeviceStatusUI("eos", "EOS Utility", "");
-                     UpdateDeviceStatusUI("hotfolder", "Hot Folder", "");
-                 }
-                 else 
-                 {
-                     yield return new WaitForSeconds(1f);
-                 }
+                CalibrationManager.instance.Init(); 
             }
-    
-            OnDevicesChecked?.Invoke(true);
-            
-            if(lblPressA != null) 
-            {
-                lblPressA.visible = true;
-                lblPressA.style.opacity = 1f; // Ensure it starts visible
-                StartCoroutine(BlinkText(lblPressA));
-            }
-    
-            yield return StartCoroutine(WaitForControllerClick());
-            
-             if(triggerProceed) 
-             {
-                 CalibrationManager.instance.ProceedAfterChecks();
-             }
         }
+        
         private IEnumerator WaitForControllerClick(Action onClick = null)
         {
              _waitingForClick = true;
@@ -464,7 +390,7 @@ public class UICalibrationToolkit : MonoBehaviour
                     UnsubscribeFromCalibrationEvents();
                     CalibrationManager.instance.OnCalibrationEnded -= OnCalibrationFinished;
                     
-                    StartCoroutine(CheckAllDevicesLoop(0.5f, false));
+                    StartCheckingDevices();
                     yield break;
                 }
         
@@ -596,38 +522,13 @@ public class UICalibrationToolkit : MonoBehaviour
         CalibrationManager.instance.OnSubmitPoint -= OnPointSubmitted;
         CalibrationManager.instance.OnErrorDuringCalibration -= OnPointError;
     }
-        private bool AllDevicesStillValid()
+    private bool AllDevicesStillValid()
     {
-       bool leftConnected = false;
-           bool rightConnected = false;
-       
-           foreach (var kvp in _devices)
-           {
-               if (kvp.Key == "leftController")
-               {
-                   leftConnected = kvp.Value.IsConnected();
-                   continue; 
-               }
-               if (kvp.Key == "rightController")
-               {
-                   rightConnected = kvp.Value.IsConnected();
-                   continue;
-               }
-               
-               if (!kvp.Value.IsConnected())
-               {
-                   //Debug.LogWarning($"Device disconnected during calibration: {kvp.Key}");
-                   return false;
-               }
-           }
-           
-           if (!leftConnected && !rightConnected)
-           {
-               //Debug.LogWarning("No controllers connected during calibration.");
-               return false;
-           }
-       
-           return true;
+        if (CalibrationManager.instance != null)
+        {
+            return CalibrationManager.instance.AreControllersConnected();
+        }
+        return true;
     }
         private void ClearCalibrationUIData()
         {
@@ -751,30 +652,27 @@ public class UICalibrationToolkit : MonoBehaviour
             icon.AddToClassList("icon-status-loading");
         }
     }
-        private void UpdateDeviceStatusUI(string key, string label, string exePath)
-    {
-        if(!_devices.ContainsKey(key)) return;
         
-        var checker = _devices[key];
-        bool contentected = checker.IsConnected();
-
-        if(!contentected && !string.IsNullOrEmpty(exePath))
+    private void BuildDevicesList(List<DeviceCheckerConfig> configs)
+    {
+        _devicesList.Clear();
+        foreach (var config in configs)
         {
-             if (!AppLauncher.IsProcessLaunched(exePath)) 
-             {
-                 AppLauncher.LaunchProcess(exePath);
-             }
+            AddDeviceRow(config.Key, config.Label);
         }
-
+        ShowPanel(_pnlCheckingDevices);
+    }
+    private void UpdateDeviceStatusUI(string key, string label, bool isConnected, string exePath)
+    {
         VisualElement row = _devicesList.Q<VisualElement>($"device-row-{key}");
-        if(row == null) return;
+        if (row == null) return;
         
         Label lbl = row.Q<Label>();
         VisualElement icon = row.Q<VisualElement>("status-icon");
         
-        if (contentected)
+        if (isConnected)
         {
-            lbl.text = $"OK: {checker.DeviceName}";
+            lbl.text = $"OK: {label}";
             icon.RemoveFromClassList("icon-status-loading");
             icon.AddToClassList("icon-status-ok");
             icon.transform.rotation = Quaternion.identity;
@@ -786,15 +684,29 @@ public class UICalibrationToolkit : MonoBehaviour
             icon.AddToClassList("icon-status-loading");
         }
     }
-        public void OpenPopupLaunching()
+    private void HandleAllDevicesReady()
+    {
+        var lblPressA = _rootOverlay.Q<Label>("lbl-press-a");
+        if (lblPressA != null) 
+        {
+            lblPressA.visible = true;
+            lblPressA.style.opacity = 1f;
+            StartCoroutine(BlinkText(lblPressA));
+        }
+
+        StartCoroutine(WaitForControllerClick(() => {
+            CalibrationManager.instance.ProceedAfterChecks();
+        }));
+    }
+    public void OpenPopupLaunching()
     {
         ShowPanel(_pnlPopupLaunch);
     }
-        public void ClosePopupLaunching()
+    public void ClosePopupLaunching()
     {
         SetPanelVisibility(_pnlPopupLaunch, false);
     }
-        private IEnumerator BlinkText(VisualElement element)
+    private IEnumerator BlinkText(VisualElement element)
     {
         while(element.visible)
         {
@@ -804,7 +716,7 @@ public class UICalibrationToolkit : MonoBehaviour
             yield return TweenOpacity(element, 0.2f, 1f, 0.5f);
         }
     }
-        private IEnumerator TweenOpacity(VisualElement element, float start, float end, float duration)
+    private IEnumerator TweenOpacity(VisualElement element, float start, float end, float duration)
     {
         float elapsed = 0f;
         while(elapsed < duration)
@@ -819,7 +731,7 @@ public class UICalibrationToolkit : MonoBehaviour
         }
         element.style.opacity = end;
     }
-        private void ShowPanel(VisualElement panelToShow)
+    private void ShowPanel(VisualElement panelToShow)
     {
         // Cache tous les panneaux via classe CSS (transition fluide)
         SetPanelVisibility(_pnlCheckingDevices, false);
