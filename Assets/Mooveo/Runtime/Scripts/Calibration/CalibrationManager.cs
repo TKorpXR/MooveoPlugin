@@ -11,23 +11,7 @@ using Quaternion = UnityEngine.Quaternion;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
-/// <summary>
-/// Gère le processus de calibration pour les périphériques XR (HMD et contrôleurs).
-/// Cette classe permet de :
-/// - Initialiser la configuration de calibration et vérifier si une calibration est nécessaire.
-/// - Capturer des positions via les contrôleurs et calculer une position moyenne pour la calibration.
-/// - Détecter les erreurs de mouvement si le contrôleur dépasse une distance de tolérance pendant l'analyse.
-/// - Sauvegarder et charger la configuration de calibration via <see cref="MooveoConfigManager"/>.
-/// - Fournir des événements pour suivre l'avancement de la calibration et les actions utilisateur : 
-///   <see cref="OnClickForCalibrating"/>, <see cref="OnErrorDuringCalibration"/>, <see cref="OnSubmitPoint"/>, <see cref="OnUpdatePoint"/>.
-/// - Vérifier si SteamVR est utilisé via OpenXR.
-/// - Obtenir des périphériques XR selon leurs caractéristiques via <see cref="GetDevicesWithChars(InputDeviceCharacteristics)"/>.
-///
-/// Cette classe est conçue pour être étendue (méthodes virtuelles <see cref="SetupPlayArea"/> et <see cref="SetupCamera"/>)
-/// afin de définir le comportement spécifique à l'application pour la configuration du play area et de la caméra.
-/// </summary>
-///
-public enum EDeviceCheckerType //Si on créer une nouvelle class héritant de IDeviceChecker il faut l'ajouter a l'enum
+public enum EDeviceCheckerType
 { 
     HMD, 
     LeftController, 
@@ -38,6 +22,7 @@ public enum EDeviceCheckerType //Si on créer une nouvelle class héritant de ID
     EosUtility, 
     HotFolder 
 }
+
 [Serializable]
 public class DeviceCheckerConfig
 {
@@ -46,6 +31,7 @@ public class DeviceCheckerConfig
     public EDeviceCheckerType Type;
     public bool RequiresExe;
 }
+
 public class CalibrationManager : MonoBehaviour
 {
     [SerializeField] private Popup _doesLaunchPopup;
@@ -62,9 +48,8 @@ public class CalibrationManager : MonoBehaviour
     [SerializeField] private List<DeviceCheckerConfig> _devicesToCheck = new List<DeviceCheckerConfig>();
     private Dictionary<DeviceCheckerConfig, IDeviceChecker> _activeCheckers = new Dictionary<DeviceCheckerConfig, IDeviceChecker>();
 
-    // Événements pour piloter l'UI sans qu'elle ne connaisse la logique
     public event Action<List<DeviceCheckerConfig>> OnInitDevicesUI;
-    public event Action<string, string, bool, string> OnUpdateDeviceUI; // Key, Label, IsConnected, ExePath
+    public event Action<string, string, bool, string> OnUpdateDeviceUI; 
     public event Action OnAllDevicesReady;
     
     private List<Vector3> _points = new List<Vector3>();
@@ -75,6 +60,7 @@ public class CalibrationManager : MonoBehaviour
     private CalibrationController _tester;
     private Coroutine _averagePosRoutine;
     private Coroutine _startOverCalibrationCooldown;
+    private Coroutine _checkDevicesRoutine; // Ajout pour gérer la boucle proprement
     private Transform _player;
     private int _nPointsToCalibrate = 3;
     private Dictionary<CalibrationController, CalibrationCursorUI> _testercursors = new Dictionary<CalibrationController, CalibrationCursorUI>();
@@ -108,37 +94,32 @@ public class CalibrationManager : MonoBehaviour
         GlobalSettings.Core.GlobalSettings.Instance.DeltaPrecisionCalibration.Bind(f => _deltaPrecisionDistance = f);
         _player = Camera.main?.transform;
         GlobalSettings.Core.GlobalSettings.MainCamera = _camera;
-        //_doesLaunchPopup.Close();
         Init();
     }
 
-    /// <summary>
-    /// Load La config si il y a deja eu une calibration sinon lance la calibration
-    /// </summary>
     private Action<bool> _launchAction;
 
-    /// <summary>
-    /// Load La config si il y a deja eu une calibration sinon lance la calibration
-    /// </summary>
     public virtual void Init()
     {
         _needCalibration = DoesNeedCalibration();
         InitCheckers();
         OnInitDevicesUI?.Invoke(_devicesToCheck);
-        StartCoroutine(CheckDevicesLogicLoop());
+        
+        // On stoppe l'ancienne boucle si elle tournait encore avant d'en relancer une
+        if (_checkDevicesRoutine != null) StopCoroutine(_checkDevicesRoutine);
+        _checkDevicesRoutine = StartCoroutine(CheckDevicesLogicLoop());
+        
         _config = MooveoConfigManager.Load();
     }
     
-
     public void OpenPopupLaunching()
     {
         if (UICalibrationToolkit.instance != null)
         {
             UICalibrationToolkit.instance.OpenPopupLaunching();
-            return; // STOP ICI pour ne pas toucher à l'ancien système
+            return; 
         }
         
-        // Code legacy seulement si le toolkit est absent
         if (_doesLaunchPopup != null)
         {
             _doesLaunchPopup.Open();
@@ -147,13 +128,8 @@ public class CalibrationManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Appelé par l'UI une fois que tous les périphériques sont validés et que l'utilisateur a cliqué.
-    /// Décide si on ouvre la popup de lancement ou si on lance la calibration directement.
-    /// </summary>
     public void ProceedAfterChecks()
     {
-        // Unsubscribe from the launch action to avoid double calls
         if(UICalibrationToolkit.instance != null)
         {
             UICalibrationToolkit.instance.OnDevicesChecked -= _launchAction;
@@ -162,7 +138,6 @@ public class CalibrationManager : MonoBehaviour
         _devicesChecked = true;
         if (!_needCalibration)
         {
-            // Reset config logic similar to what was in _launchAction
              _config = MooveoConfigManager.Load();
                 
             if (_config != null && _config.Points != null && _config.Points.Count >= 3)
@@ -184,13 +159,10 @@ public class CalibrationManager : MonoBehaviour
     
     public bool AreControllersConnected()
     {
-        //if (GlobalSettings.Core.GlobalSettings.Instance.UseViveTracker.Value) return true;
-
         bool leftConnected = false;
         bool rightConnected = false;
         bool trackerConnected = false;
 
-        // On parcourt les checkers actifs pour voir si une manette est là
         foreach (var kvp in _activeCheckers)
         {
             if (kvp.Key.Type == EDeviceCheckerType.LeftController) leftConnected = kvp.Value.IsConnected();
@@ -224,6 +196,9 @@ public class CalibrationManager : MonoBehaviour
     }
     private bool DoesNeedCalibration()
     {
+        // AJOUT VITAL : Force la calibration si on a appuyé sur "Start Over" ou "Refine"
+        if (_ignoreConfig) return true;
+
         if (!MooveoConfigManager.Exists()) return true;
         _config = MooveoConfigManager.Load();
         if (_config.Points.Count <= 2) return true;
@@ -259,7 +234,6 @@ public class CalibrationManager : MonoBehaviour
                 bool isConnected = checker.IsConnected();
                 string exePath = "";
 
-                // Gestion de l'EXE uniquement si demandé
                 if (!isConnected && config.RequiresExe)
                 {
                     exePath = GetExePathForType(config.Type);
@@ -269,25 +243,22 @@ public class CalibrationManager : MonoBehaviour
                     }
                 }
 
-                // On envoie l'état actuel à l'UI
                 OnUpdateDeviceUI?.Invoke(config.Key, config.Label, isConnected, exePath);
 
                 if (!isConnected) allDevicesValid = false;
 
-                yield return new WaitForSeconds(0.5f); // Petit délai entre chaque check
+                yield return new WaitForSeconds(0.5f); 
             }
 
             if (!allDevicesValid) yield return new WaitForSeconds(1f);
         }
 
-        // Si on sort de la boucle, tout est connecté !
         _devicesChecked = true;
         OnAllDevicesReady?.Invoke();
     }
 
     private string GetExePathForType(EDeviceCheckerType type)
     {
-        // On récupère le chemin depuis tes GlobalSettings
         var gs = GlobalSettings.Core.GlobalSettings.Instance;
         switch (type)
         {
@@ -300,7 +271,6 @@ public class CalibrationManager : MonoBehaviour
     
     public void StartOverCalibration()
     {
-        // On s'assure de se désabonner de l'action de lancement si elle est toujours active
         if (_launchAction != null && UICalibrationToolkit.instance != null)
         {
             UICalibrationToolkit.instance.OnDevicesChecked -= _launchAction;
@@ -313,7 +283,7 @@ public class CalibrationManager : MonoBehaviour
         }
 
         _ignoreConfig = true;
-        // Sécurité : Ne fermer que si l'objet est actif et existe
+        
         if (_doesLaunchPopup != null && _doesLaunchPopup.gameObject.activeInHierarchy)
         {
             _doesLaunchPopup.Close();
@@ -324,24 +294,23 @@ public class CalibrationManager : MonoBehaviour
         if (_startOverCalibrationCooldown != null) return;
         _startOverCalibrationCooldown = StartCoroutine(StartOverCalibrationCooldown());
         ClearTestCalibration(true);
-        UICalibrationToolkit.instance.StartMainFlow(_nPointsToCalibrate);
+        
+        // LA CORRECTION EST ICI : On relance l'initialisation complète au lieu de forcer l'UI
+        Init(); 
     }
 
     public void RefineCalibration()
     {
+        _ignoreConfig = true; // S'assurer de forcer la calibration ici aussi
         ClearTestCalibration(true);
         _nPointsToCalibrate = 9;
-        UICalibrationToolkit.instance.StartMainFlow(_nPointsToCalibrate);
+        
+        // LA CORRECTION EST ICI AUSSI
+        Init();
     }
     
-    /// <summary>
-    /// Gère la reception d'event lié au trigger de la manette lorsque l'on est dans moveo
-    /// </summary>
-    /// <param name="_controllerTransform"> le transform de la manette dans le world a suivre</param>
     public void HandleClick(Transform _controllerTransform)
     {
-        //_points.Add(_controllerTransform.position);
-        //Debug.Log(_controllerTransform.position);
         if (!_devicesChecked || !_needCalibration) return;
         
         if (_averagePosRoutine != null)
@@ -354,9 +323,6 @@ public class CalibrationManager : MonoBehaviour
         _averagePosRoutine = StartCoroutine(AveragePosition(_controllerTransform));
     }
 
-    /// <summary>
-    /// Gère la réception d'event lié au bouton thumb de la manette lorsque l'on est dans moveo
-    /// </summary>
     public void HandleThumbClick()
     {
 
@@ -366,9 +332,6 @@ public class CalibrationManager : MonoBehaviour
     {
         if(_config == null) return;
         SaveConfig();
-        //SetupPlayArea();
-        //SetupCamera();
-        //CalibrationGraffWall.instance.Init(_config);
         if (!MooveoConfigManager.Exists())
         {
             Debug.LogError("CALIBRATION : Le fichier n'a pas été sauvegardé, LoadScene annulé.");
@@ -380,10 +343,6 @@ public class CalibrationManager : MonoBehaviour
         SceneManager.LoadScene("Scene_02_Calibration_Camera_5");
     }
 
-    /// <summary>
-    /// Permet d'obtenir un <see cref="InputDevice"/> avec une série de caractéristiques  <see cref="InputDeviceCharacteristics"/>
-    /// </summary>
-    /// <param name="characteristics">Les caractéristiques qui doivent correspondre à l'InputDevice</param>
     public static List<InputDevice> GetDevicesWithChars(InputDeviceCharacteristics characteristics)
     {
         List<InputDevice> hmds = new List<InputDevice>();
@@ -391,18 +350,11 @@ public class CalibrationManager : MonoBehaviour
         return hmds;
     }
     
-    /// <summary>
-    /// Permet de vérifier si SteamVR est bien lancé
-    /// </summary>
     public static bool IsSteamVRRunning()
     {
-        // SteamVR = runtime OpenXR nommé "SteamVR OpenXR"
         return OpenXRRuntime.name.Contains("SteamVR");
     }
 
-    /// <summary>
-    /// Sauvegarde la configuration générée après la calibration
-    /// </summary>
     public void SaveConfig()
     {
         _config.Points = new List<Vector3>(_points);
@@ -410,9 +362,6 @@ public class CalibrationManager : MonoBehaviour
         MooveoConfigManager.Save(_config);
     }
     
-    /// <summary>
-    /// Cette Fonction est appelée au lancement du test de la calibration pour initialiser la zone de test avec les données de config de réalisé durant la phase de calibration
-    /// </summary>
     public void TestCalibrationSetupPlayArea(CalibrationController tester)
     {
         if (_points.Count < 3)
@@ -445,9 +394,6 @@ public class CalibrationManager : MonoBehaviour
         TestCalibrationSetupCamera(center, _transformTestReference.forward, _transformTestReference.up, _transformTestReference.localScale.y, tester);
     }
 
-    /// <summary>
-    /// Cette Fonction est appelée au lancement du test de la calibration pour positionner et setup la camera 
-    /// </summary>
     public void TestCalibrationSetupCamera(Vector3 planeCenter, Vector3 planeForward, Vector3 planeUp, float planeHeight, CalibrationController tester)
     {
         
@@ -467,7 +413,7 @@ public class CalibrationManager : MonoBehaviour
         
         _camera.orthographicSize = planeHeight * 0.5f;
         float offset = 0.0001f;
-        Vector3 canvasCursorPos = planeCenter; //-_generatedPlane.transform.forward * offset;
+        Vector3 canvasCursorPos = planeCenter; 
         Vector2 sizeDelta = _transformTestReference.localScale;
         Vector3 euler = _transformTestReference.eulerAngles;
         UICalibrationToolkit.instance.InitCanvasCursor(canvasCursorPos, sizeDelta, euler);
@@ -513,7 +459,6 @@ public class CalibrationManager : MonoBehaviour
             {
                 Debug.Log($"ERROR DIST: distance {distance} limit {_deltaPrecisionDistance}");
                 OnErrorDuringCalibration?.Invoke();
-                //OnSubmitPoint?.Invoke();
                 yield break;
             }
             OnUpdatePoint?.Invoke(elapsedTime / _posAnalysisTime);
@@ -521,7 +466,6 @@ public class CalibrationManager : MonoBehaviour
             averagePosition += controllerTransform.position;
             averageForward += controllerTransform.forward;
             counter++;
-            //Debug.Log(elapsedTime);
             if(_debugSlider != null) _debugSlider.value = elapsedTime / _posAnalysisTime;
             yield return null;
         }
@@ -550,7 +494,6 @@ public class CalibrationManager : MonoBehaviour
         UICalibrationToolkit.instance?.NotifyOnNextStep(calibrationController);
     }
 
-
     private bool CalibrationEnded()
     {
         _needCalibration = !(_points.Count >= _nPointsToCalibrate);
@@ -565,8 +508,9 @@ public class CalibrationManager : MonoBehaviour
         
         _points.Clear();
         _normals.Clear();
-        if(_tester != null) _tester.ClearTest(); //Si call au tout debut evite un crash car _tester est null
+        if(_tester != null) _tester.ClearTest(); 
     }
+    
     private Vector3 CalculateCenter(List<Vector3> points, out int centerIndex)
     {
         if (GlobalSettings.Core.GlobalSettings.Instance.Headless.Value)
@@ -607,14 +551,6 @@ public class CalibrationManager : MonoBehaviour
 
         Vector3 e1 = extremites[0];
         Vector3 e2 = extremites[1];
-
-        //Vector3 dir = (e2 - e1).normalized;
-
-        //float dot1 = Vector3.Dot((e1 - points[centerIndex]).normalized, dir);
-        //float dot2 = Vector3.Dot((e2 - points[centerIndex]).normalized, dir);
-
-        //Vector3 left = dot1 < dot2 ? e1 : e2;
-        //Vector3 right = dot1 < dot2 ? e2 : e1;
         
         Vector3 dir1 = (e1 - points[centerIndex]).normalized;
         Vector3 dir2 = (e2 - points[centerIndex]).normalized;
@@ -637,6 +573,5 @@ public class CalibrationManager : MonoBehaviour
         }
 
         return (left, right);
-        //return (right, left);
     }
 }

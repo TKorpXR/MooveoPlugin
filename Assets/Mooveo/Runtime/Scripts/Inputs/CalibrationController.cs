@@ -1,4 +1,5 @@
 using System;
+using NaughtyAttributes;
 using UnityEngine;
 
 public enum EUIClickInput
@@ -21,10 +22,10 @@ public class CalibrationController : DefaultController
     [SerializeField, Tooltip("Quel bouton utiliser pour interagir avec l'UI ?")] 
     private EUIClickInput _uiClickInput = EUIClickInput.TriggerAxis;
     
-    [SerializeField, Tooltip("Valeur à partir de laquelle le clic devient TRUE (Uniquement pour TriggerAxis)")] 
+    [ShowIf("_uiClickInput", EUIClickInput.TriggerAxis), SerializeField, Tooltip("Valeur à partir de laquelle le clic devient TRUE (Uniquement pour TriggerAxis)")] 
     private float _triggerThresholdTrue = 0.7f;
     
-    [SerializeField, Tooltip("Valeur à partir de laquelle le clic redevient FALSE (Uniquement pour TriggerAxis)")] 
+    [ShowIf("_uiClickInput", EUIClickInput.TriggerAxis), SerializeField, Tooltip("aleur à partir de laquelle le clic redevient FALSE (Uniquement pour TriggerAxis)")] 
     private float _triggerThresholdFalse = 0.6f;
 
     private Transform _cursorAnchor;

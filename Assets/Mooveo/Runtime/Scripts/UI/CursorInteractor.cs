@@ -13,6 +13,8 @@ public enum UIInteractionMode
 public class CursorInteractor : MonoBehaviour
 {
     [SerializeField] private UIInteractionMode _interactionMode = UIInteractionMode.PhysicsRaycast3D;
+    [SerializeField] private bool _debug = false;
+    
     private Camera _camera;
     private PointerEventData _pointer;
     private readonly List<RaycastResult> _results = new List<RaycastResult>();
@@ -216,11 +218,11 @@ public class CursorInteractor : MonoBehaviour
                 }
                 else if (isDragIntent)
                 {
-                    Debug.Log($"[XR_DEBUG] Click ignored: User intended to scroll (Distance: {travelDistance})");
+                    if(_debug)Debug.Log($"[XR_DEBUG] Click ignored: User intended to scroll (Distance: {travelDistance})");
                 }
                 else
                 {
-                    Debug.LogWarning($"[XR_DEBUG] Click cancelled: Pressed on '{_pressedVisualElement?.name}' but released on '{_currentVisualElement?.name}'");
+                    if(_debug) Debug.LogWarning($"[XR_DEBUG] Click cancelled: Pressed on '{_pressedVisualElement?.name}' but released on '{_currentVisualElement?.name}'");
                 }
                 
                 _pressedVisualElement = null;
@@ -274,7 +276,7 @@ public class CursorInteractor : MonoBehaviour
                 if (picked == null)
                 {
                      Vector2 flippedPos = new Vector2(localHit.x, -localHit.y);
-                     Debug.Log($"Flipped pos: {flippedPos}");
+                     if(_debug) Debug.Log($"Flipped pos: {flippedPos}");
                      VisualElement flippedPick = uiDoc.rootVisualElement.panel.Pick(flippedPos);
                      if (flippedPick != null)
                      {
@@ -286,14 +288,14 @@ public class CursorInteractor : MonoBehaviour
             else
             {
                 panelPos = RuntimePanelUtils.ScreenToPanel(uiDoc.rootVisualElement.panel, screenPos);
-                Debug.Log($"Panel pos in else: {panelPos}");
+                if(_debug) Debug.Log($"Panel pos in else: {panelPos}");
                 picked = uiDoc.rootVisualElement.panel.Pick(panelPos);
             }
 
             if (picked == null && !physicsHit.HasValue)
             {
                 picked = uiDoc.rootVisualElement.panel.Pick(panelPos);
-                Debug.Log($"Panel pos in if: {panelPos}");
+                if(_debug) Debug.Log($"Panel pos in if: {panelPos}");
             }
 
             
@@ -321,11 +323,11 @@ public class CursorInteractor : MonoBehaviour
                 if(picked != null)
                 {
                     string elementName = string.IsNullOrEmpty(picked.name) ? "Élément_Sans_Nom" : picked.name;
-                    Debug.Log($"<color=cyan>[HOVER]</color> Curseur entre sur : <b>{elementName}</b> <i>({picked.GetType().Name})</i>");
+                    if(_debug) Debug.Log($"<color=cyan>[HOVER]</color> Curseur entre sur : <b>{elementName}</b> <i>({picked.GetType().Name})</i>");
                 }
                 else if (_currentVisualElement != null)
                 {
-                    Debug.Log($"<color=grey>[HOVER]</color> Curseur sort dans le vide.");
+                    if(_debug) Debug.Log($"<color=grey>[HOVER]</color> Curseur sort dans le vide.");
                 }
                 if (_currentVisualElement != null)
                     UsingUIToolkitPointerEvent(PointerLeaveEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
@@ -381,6 +383,7 @@ public class CursorInteractor : MonoBehaviour
     public void SetClicking(bool isClicking)
     {
         _isClicking = isClicking;
+        if (_debug) Debug.Log($"[CursorInteractor] SetClicking: {isClicking}");
         OnClick?.Invoke(_isClicking);
     }
 

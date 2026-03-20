@@ -18,6 +18,9 @@ public class ControllerShortcutHandler : MonoBehaviour
     [SerializeField]
     private List<ShortcutEntry> _shortcuts = new List<ShortcutEntry>();
 
+    [SerializeField]
+    private bool _debug = false;
+
     private InputReader _reader;
     private Dictionary<ControllerButton, bool> _buttonStates = new Dictionary<ControllerButton, bool>();
     private Dictionary<ControllerButton, bool> _buttonDown = new Dictionary<ControllerButton, bool>();
@@ -162,4 +165,98 @@ public class ControllerShortcutHandler : MonoBehaviour
     private void OnBPressed() => SetState(ControllerButton.B, true);
     private void OnBReleased() => SetState(ControllerButton.B, false);
     private void OnThumbPressed() => SetState(ControllerButton.Thumb, true);
+    
+    /// <summary>
+    /// Ajoute les shortcuts par défaut pour un tracker
+    /// </summary>
+    public void AddShortcut()
+    {
+        // Ajouter ici les shortcuts par défaut pour les trackers
+        // Par exemple : un shortcut pour calibrer, reset, etc.
+        
+        // Exemple : Trigger + A pour calibrer
+        AddShortcut("Tracker_Calibrate", ControllerButton.Trigger, ControllerButton.A, () => {
+            Debug.Log("[ControllerShortcutHandler] Calibration du tracker demandée");
+            // Ajouter ici la logique de calibration
+        });
+        
+        // Exemple : Trigger + B pour reset
+        AddShortcut("Tracker_Reset", ControllerButton.Trigger, ControllerButton.B, () => {
+            Debug.Log("[ControllerShortcutHandler] Reset du tracker demandé");
+            // Ajouter ici la logique de reset
+        });
+    }
+    
+    /// <summary>
+    /// Ajoute un nouveau shortcut au runtime
+    /// </summary>
+    /// <param name="name">Nom du shortcut</param>
+    /// <param name="button1">Premier bouton (ControllerButton.None si non utilisé)</param>
+    /// <param name="button2">Deuxième bouton (ControllerButton.None si non utilisé)</param>
+    /// <param name="onTrigger">Action à exécuter quand le shortcut est déclenché</param>
+    public void AddShortcut(string name, ControllerButton button1, ControllerButton button2, UnityAction onTrigger)
+    {
+        var newEntry = new ShortcutEntry
+        {
+            Name = name,
+            Button1 = button1,
+            Button2 = button2,
+            OnTrigger = new UnityEvent()
+        };
+        
+        if (onTrigger != null)
+        {
+            newEntry.OnTrigger.AddListener(onTrigger);
+        }
+        
+        _shortcuts.Add(newEntry);
+        
+        if (_debug)
+        {
+            Debug.Log($"[ControllerShortcutHandler] Shortcut ajouté: {name} ({button1} + {button2})");
+        }
+    }
+    
+    /// <summary>
+    /// Ajoute un nouveau shortcut avec un seul bouton
+    /// </summary>
+    /// <param name="name">Nom du shortcut</param>
+    /// <param name="button">Bouton à utiliser</param>
+    /// <param name="onTrigger">Action à exécuter quand le shortcut est déclenché</param>
+    public void AddShortcut(string name, ControllerButton button, UnityAction onTrigger)
+    {
+        AddShortcut(name, button, ControllerButton.None, onTrigger);
+    }
+    
+    /// <summary>
+    /// Supprime un shortcut par son nom
+    /// </summary>
+    /// <param name="name">Nom du shortcut à supprimer</param>
+    /// <returns>True si le shortcut a été trouvé et supprimé</returns>
+    public bool RemoveShortcut(string name)
+    {
+        for (int i = _shortcuts.Count - 1; i >= 0; i--)
+        {
+            if (_shortcuts[i].Name == name)
+            {
+                _shortcuts.RemoveAt(i);
+                if (_debug)
+                {
+                    Debug.Log($"[ControllerShortcutHandler] Shortcut supprimé: {name}");
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// Vérifie si un shortcut existe déjà
+    /// </summary>
+    /// <param name="name">Nom du shortcut à vérifier</param>
+    /// <returns>True si le shortcut existe</returns>
+    public bool HasShortcut(string name)
+    {
+        return _shortcuts.Exists(s => s.Name == name);
+    }
 }

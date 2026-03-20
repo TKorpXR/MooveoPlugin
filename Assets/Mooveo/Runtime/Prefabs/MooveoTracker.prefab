@@ -10,6 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 8249581225519224478}
   - component: {fileID: 3905509855041539897}
+  - component: {fileID: 3673934659486749531}
+  - component: {fileID: 7781299085674605003}
+  - component: {fileID: 820817533215559935}
   m_Layer: 0
   m_Name: MooveoTracker
   m_TagString: Untagged
@@ -47,4 +50,56 @@ MonoBehaviour:
   _trackerName: "Non d\xE9tect\xE9"
   _trackedPoseDriver: {fileID: 0}
   _controller: {fileID: 0}
+  _debug: 0
+--- !u!114 &3673934659486749531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793823722413383135}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0720d07fe041ac04d94ed9a7d754ba38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mooveo.Runtime::InputReader
+  _inputConfig: {fileID: 11400000, guid: b2c053a4bd6c8b8468237702758c1dcc, type: 2}
+  _ignoreGlobalSettings: 0
+  SimulateVR: 0
+--- !u!114 &7781299085674605003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793823722413383135}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea3b325e81b8ac746a32196e8ad632e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mooveo.Runtime::CalibrationController
+  _reader: {fileID: 3673934659486749531}
+  _shortcutHandler: {fileID: 820817533215559935}
+  IsTracked: 0
+  PlayerID: 0
+  _cursor: {fileID: 0}
+  _trackerTransform: {fileID: 0}
+  _factorRadiusMIN: 0.1
+  _factorRadiusMAX: 0.5
+  _uiClickInput: 2
+  _triggerThresholdTrue: 0.7
+  _triggerThresholdFalse: 0.6
+--- !u!114 &820817533215559935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793823722413383135}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6a483887141b5c43be595b5974abcad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mooveo.Runtime::ControllerShortcutHandler
+  _shortcuts: []
   _debug: 0

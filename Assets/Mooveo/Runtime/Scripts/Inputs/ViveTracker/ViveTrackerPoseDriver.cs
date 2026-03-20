@@ -1,8 +1,8 @@
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.XR;
+using HTC.UnityPlugin.VRModuleManagement; // Ajout indispensable pour VIU
 
 public class ViveTrackerPoseDriver : MonoBehaviour
 {
@@ -10,34 +10,79 @@ public class ViveTrackerPoseDriver : MonoBehaviour
     [SerializeField] private string _trackerName = "Non détecté";
 
     [Header("Références optionnelles")]
+    [SerializeField] private TrackedPoseDriver _trackedPoseDriver;
+    [SerializeField] private GameObject _controller;
     [SerializeField] private bool _debug = false;
     
-    private TrackedDevice _myTracker;
+    // Variables pour l'Input System
+    private InputDevice _myTrackerInputDevice;
+    
+    // Variables pour HTC VIU
+    private uint _viuDeviceIndex = VRModule.INVALID_DEVICE_INDEX;
+    private bool _isUsingVIU = false;
 
     /// <summary>
-    /// Appelé par le ViveTrackerManager lors de l'instanciation
+    /// Initialisation via l'Input System d'Unity
     /// </summary>
-    public void Init(TrackedDevice tracker)
+    public void InitWithInputSystem(InputDevice tracker)
     {
-        _myTracker = tracker;
+        _myTrackerInputDevice = tracker;
         _trackerName = tracker.displayName;
+        _isUsingVIU = false;
+        CompleteInit();
+    }
 
-        if (_debug) Debug.Log($"[ViveTrackerPoseDriver] ✔️ Initialisé pour écouter le tracker : {_trackerName}");
+    /// <summary>
+    /// Initialisation directe via l'API matérielle de HTC VIU
+    /// </summary>
+    public void InitWithVIU(uint deviceIndex, string roleName)
+    {
+        _viuDeviceIndex = deviceIndex;
+        _trackerName = $"VIU_{roleName}";
+        _isUsingVIU = true;
+        CompleteInit();
+    }
+
+    private void CompleteInit()
+    {
+        if (_trackedPoseDriver != null) _trackedPoseDriver.enabled = false;
+        if (_controller != null) _controller.SetActive(true);
+        if (_debug) Debug.Log($"[ViveTrackerPoseDriver] ✔️ Initialisé : {_trackerName}");
     }
 
     void Update()
     {
-        if (_myTracker == null || !_myTracker.added) return;
+        if (_isUsingVIU) UpdateWithVIU();
+        else UpdateWithInputSystem();
+    }
+
+    private void UpdateWithVIU()
+    {
+        if (_viuDeviceIndex == VRModule.INVALID_DEVICE_INDEX) return;
+
+        // Lecture directe depuis la DLL C++ de HTC / SteamVR !
+        IVRModuleDeviceState state = VRModule.GetCurrentDeviceState(_viuDeviceIndex);
         
-        var posControl = _myTracker.GetChildControl<Vector3Control>("deviceposition") 
-                      ?? _myTracker.GetChildControl<Vector3Control>("devicePosition")
-                      ?? _myTracker.GetChildControl<Vector3Control>("position");
+        if (state != null && state.isConnected && state.isPoseValid)
+        {
+            transform.localPosition = state.position;
+            transform.localRotation = state.rotation;
+        }
+    }
+
+    private void UpdateWithInputSystem()
+    {
+        if (_myTrackerInputDevice == null || !_myTrackerInputDevice.added) return;
+
+        var posControl = _myTrackerInputDevice.GetChildControl<Vector3Control>("deviceposition") 
+                      ?? _myTrackerInputDevice.GetChildControl<Vector3Control>("devicePosition")
+                      ?? _myTrackerInputDevice.GetChildControl<Vector3Control>("position");
 
         if (posControl != null) transform.localPosition = posControl.ReadValue();
-        
-        var rotControl = _myTracker.GetChildControl<QuaternionControl>("devicerotation") 
-                      ?? _myTracker.GetChildControl<QuaternionControl>("deviceRotation")
-                      ?? _myTracker.GetChildControl<QuaternionControl>("rotation");
+
+        var rotControl = _myTrackerInputDevice.GetChildControl<QuaternionControl>("devicerotation") 
+                      ?? _myTrackerInputDevice.GetChildControl<QuaternionControl>("deviceRotation")
+                      ?? _myTrackerInputDevice.GetChildControl<QuaternionControl>("rotation");
 
         if (rotControl != null) transform.localRotation = rotControl.ReadValue();
     }

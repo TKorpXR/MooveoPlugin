@@ -11,6 +11,8 @@ public class UICalibrationToolkit : MonoBehaviour
     [Header("Hybrid UI Setup")]
     [SerializeField] private UIDocument _docOverlay;
     [SerializeField] private UIDocument _docWorld;
+    [SerializeField] private Transform _canvasCursors;
+
 
     [Header("Configuration")]
     [SerializeField] private float _zoneRadiusCm = 5f;
@@ -610,6 +612,8 @@ public class UICalibrationToolkit : MonoBehaviour
             float dynamicScale = sizeDelta.x / uiWidthInMeters;
             
             _docWorld.transform.localScale = new Vector3(dynamicScale, dynamicScale, 1f);
+            _canvasCursors.position = position;
+            _canvasCursors.eulerAngles = euler;
         
             //Debug.Log($"[UICalibrationToolkit] UI Scaled to fit {sizeDelta.x}m width. Result Scale: {dynamicScale}");
         }

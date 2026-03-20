@@ -257,6 +257,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Mooveo.Runtime::ViveTrackerManager
   _trackerPrefab: {fileID: 793823722413383135, guid: b1f5efef41cdc41429b9d98ccc130260, type: 3}
   _debug: 1
+  _useViveInputUtility: 1
+  _contextType: 0
 --- !u!1 &871032575
 GameObject:
   m_ObjectHideFlags: 0
@@ -582,12 +584,12 @@ MonoBehaviour:
   _devicesToCheck:
   - Key: SteamVR
     Label: SteamVR
-    Type: 4
+    Type: 5
     RequiresExe: 1
   - Key: AnyController
     Label: AnyController
     Type: 3
-    RequiresExe: 1
+    RequiresExe: 0
   _debugSlider: {fileID: 0}
 --- !u!1 &1873943182
 GameObject:
@@ -659,6 +661,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UICalibrationToolkit
   _docOverlay: {fileID: 1873943183}
   _docWorld: {fileID: 1074222892}
+  _canvasCursors: {fileID: 1875930696}
   _zoneRadiusCm: 5
   _uiWidthPixels: 1920
   _uiPanelPPU: 100
@@ -811,7 +814,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: GlobalSettings.Core::GlobalSettings.Core.GlobalSettings
   Headless:
-    _value: 0
+    _value: 1
   DefaultExportPath:
     _value: C:\Users\smart\Desktop\Graffwall_V3\Export
   HotFolderEXEPath:
