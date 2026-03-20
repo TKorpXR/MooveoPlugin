@@ -4,32 +4,27 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using HTC.UnityPlugin.Vive;
-using HTC.UnityPlugin.VRModuleManagement; // L'accès direct au matériel
+using HTC.UnityPlugin.VRModuleManagement;
+using Valve.VR;
 
 public class ViveTrackerInputDebugger : MonoBehaviour
 {
     [Header("Configuration")]
     [Tooltip("Désactivez pour arrêter de spammer la console")]
     [SerializeField] private bool _enableDebug = true;
-    [Tooltip("Différence minimum pour afficher un changement d'axe (évite le spam)")]
+    [Tooltip("Différence minimum pour afficher un changement d'axe")]
     [SerializeField] private float _axisDeltaThreshold = 0.05f;
 
     [Header("Infos (Lecture Seule)")]
     [SerializeField] private string _trackerName = "Non détecté";
 
-    // Variables Input System
     private InputDevice _myTrackerInputDevice;
-
-    // Variables HTC VIU
     private uint _viuDeviceIndex = VRModule.INVALID_DEVICE_INDEX;
     private bool _isUsingVIU = false;
-
-    // Caches pour l'Input System
+    
     private Dictionary<string, float> _previousInputSystemAxes = new Dictionary<string, float>();
-
-    // Caches pour le matériel brut (RAW Hardware)
-    private HashSet<VRModuleRawButton> _previousRawButtons = new HashSet<VRModuleRawButton>();
-    private Dictionary<VRModuleRawAxis, float> _previousRawAxes = new Dictionary<VRModuleRawAxis, float>();
+    private HashSet<int> _previousRawButtons = new HashSet<int>();
+    private Dictionary<int, float> _previousRawAxes = new Dictionary<int, float>();
 
     public void InitWithInputSystem(InputDevice tracker)
     {
@@ -37,7 +32,7 @@ public class ViveTrackerInputDebugger : MonoBehaviour
         _trackerName = tracker.displayName;
         _isUsingVIU = false;
         _previousInputSystemAxes.Clear();
-        Debug.Log($"[InputDebugger] 🕵️‍♂️ Démarré en mode Input System pour : {_trackerName}");
+        Debug.Log($"[InputDebugger] 🕵️‍♂️ Mode Input System : {_trackerName}");
     }
 
     public void InitWithVIU(uint deviceIndex, string roleName)
@@ -48,63 +43,58 @@ public class ViveTrackerInputDebugger : MonoBehaviour
 
         _previousRawButtons.Clear();
         _previousRawAxes.Clear();
-        foreach (VRModuleRawAxis axis in Enum.GetValues(typeof(VRModuleRawAxis)))
-        {
-            _previousRawAxes[axis] = 0f;
-        }
-
-        Debug.Log($"[InputDebugger] 🕵️‍♂️ Démarré en mode MATÉRIEL BRUT (RAW) pour : {_trackerName} (Index Puce: {_viuDeviceIndex})");
+        Debug.Log($"[InputDebugger] Mode OPENVR RAW  : {_trackerName}");
     }
 
     void Update()
     {
         if (!_enableDebug) return;
 
-        if (_isUsingVIU) UpdateWithRawVIU();
+        if (_isUsingVIU) UpdateWithOpenVRRaw();
         else UpdateWithInputSystem();
     }
 
-    private void UpdateWithRawVIU()
+    private void UpdateWithOpenVRRaw()
     {
         if (_viuDeviceIndex == VRModule.INVALID_DEVICE_INDEX) return;
         
-        IVRModuleDeviceState state = VRModule.GetCurrentDeviceState(_viuDeviceIndex);
+        var system = OpenVR.System;
+        if (system == null) return;
 
-        if (state == null || !state.isConnected) return;
+        VRControllerState_t state = new VRControllerState_t();
+        uint size = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VRControllerState_t));
+        bool success = system.GetControllerState(_viuDeviceIndex, ref state, size);
         
-        foreach (VRModuleRawButton button in Enum.GetValues(typeof(VRModuleRawButton)))
+        if (!success) return;
+        
+        for (int i = 0; i < 64; i++)
         {
-            bool isPressed = state.GetButtonPress(button);
-            bool wasPressed = _previousRawButtons.Contains(button);
+            ulong bit = 1ul << i;
+            bool isPressed = (state.ulButtonPressed & bit) != 0;
+            bool wasPressed = _previousRawButtons.Contains(i);
 
             if (isPressed && !wasPressed)
             {
-                Debug.Log($"<color=magenta>[RAW HARDWARE]</color> {_trackerName} | BOUTON PRESSÉ : {button}");
-                _previousRawButtons.Add(button);
+                string btnName = ((EVRButtonId)i).ToString().Replace("k_EButton_", "");
+                Debug.Log($"<color=magenta>[OPENVR RAW]</color> {_trackerName} | PRESSION : {btnName} (ID: {i})");
+                _previousRawButtons.Add(i);
             }
             else if (!isPressed && wasPressed)
             {
-                Debug.Log($"<color=magenta>[RAW HARDWARE]</color> {_trackerName} | BOUTON RELÂCHÉ : {button}");
-                _previousRawButtons.Remove(button);
+                Debug.Log($"<color=magenta>[OPENVR RAW]</color> {_trackerName} | RELÂCHÉ (ID: {i})");
+                _previousRawButtons.Remove(i);
             }
         }
-
-        // 2. Écoute des Axes Bruts
-        foreach (VRModuleRawAxis axis in Enum.GetValues(typeof(VRModuleRawAxis)))
+        
+        float[] currentAxes = new float[] { state.rAxis0.x, state.rAxis1.x, state.rAxis2.x, state.rAxis3.x, state.rAxis4.x };
+        for (int i = 0; i < currentAxes.Length; i++)
         {
-            float currentValue = state.GetAxisValue(axis);
-            
-            if (_previousRawAxes.TryGetValue(axis, out float previousValue))
+            if (!_previousRawAxes.ContainsKey(i)) _previousRawAxes[i] = 0f;
+
+            if (Mathf.Abs(currentAxes[i] - _previousRawAxes[i]) > _axisDeltaThreshold)
             {
-                if (Mathf.Abs(currentValue - previousValue) > _axisDeltaThreshold)
-                {
-                    Debug.Log($"<color=yellow>[RAW HARDWARE]</color> {_trackerName} | AXE MODIFIÉ : {axis} = {currentValue:F2}");
-                    _previousRawAxes[axis] = currentValue;
-                }
-            }
-            else
-            {
-                _previousRawAxes[axis] = currentValue;
+                Debug.Log($"<color=yellow>[OPENVR RAW]</color> {_trackerName} | AXE {i} : {currentAxes[i]:F2}");
+                _previousRawAxes[i] = currentAxes[i];
             }
         }
     }
@@ -118,21 +108,9 @@ public class ViveTrackerInputDebugger : MonoBehaviour
             if (control is ButtonControl button)
             {
                 if (button.wasPressedThisFrame)
-                    Debug.Log($"<color=green>[InputSystem DETECT]</color> {_trackerName} | BOUTON PRESSÉ : {button.name}");
-                
+                    Debug.Log($"<color=green>[InputSystem]</color> {button.name} PRESSÉ");
                 if (button.wasReleasedThisFrame)
-                    Debug.Log($"<color=green>[InputSystem DETECT]</color> {_trackerName} | BOUTON RELÂCHÉ : {button.name}");
-            }
-            else if (control is AxisControl axisControl && !control.name.Contains("position") && !control.name.Contains("rotation"))
-            {
-                float currentValue = axisControl.ReadValue();
-                _previousInputSystemAxes.TryGetValue(control.name, out float previousValue);
-
-                if (Mathf.Abs(currentValue - previousValue) > _axisDeltaThreshold)
-                {
-                    Debug.Log($"<color=yellow>[InputSystem DETECT]</color> {_trackerName} | AXE MODIFIÉ : {control.name} = {currentValue:F2}");
-                    _previousInputSystemAxes[control.name] = currentValue;
-                }
+                    Debug.Log($"<color=green>[InputSystem]</color> {button.name} RELÂCHÉ");
             }
         }
     }
