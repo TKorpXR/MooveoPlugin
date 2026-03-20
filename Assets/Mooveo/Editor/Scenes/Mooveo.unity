@@ -211,6 +211,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &607639255
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 607639256}
+  - component: {fileID: 607639257}
+  m_Layer: 0
+  m_Name: MooveoTrackerManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &607639256
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 607639255}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 871032576}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &607639257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 607639255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e412c9dd6582ec943b59ba3df067ac95, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mooveo.Runtime::ViveTrackerManager
+  _trackerPrefab: {fileID: 793823722413383135, guid: b1f5efef41cdc41429b9d98ccc130260, type: 3}
+  _debug: 1
 --- !u!1 &871032575
 GameObject:
   m_ObjectHideFlags: 0
@@ -244,6 +290,7 @@ Transform:
   - {fileID: 1828387687}
   - {fileID: 2071903465}
   - {fileID: 1390131594}
+  - {fileID: 607639256}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1021331708
@@ -763,85 +810,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e906d23c377458c49a98598c559f1ea7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GlobalSettings.Core::GlobalSettings.Core.GlobalSettings
-  VR:
-    _value: 1
-  ThresholdDepth:
-    _value: 0.001
-  PaintingOpacityMIN:
-    _value: 0.1
-  PaintingOpacityMAX:
-    _value: 1
-  PaintingRadiusMIN:
-    _value: 0.005
-  PaintingRadiusMAX:
-    _value: 0.15
-  PaintingDepthMIN:
-    _value: 0.01
-  PaintingDepthMAX:
-    _value: 2
-  PaintingTriggerThreshold:
-    _value: 0.1
-  PaintingFrequencyMIN:
-    _value: 50
-  PaintingFrequencyMAX:
-    _value: 100
-  PaintingSmoothing:
-    _value: 5
-  PaintingSmoothingSampleCount:
-    _value: 5
-  StickerRotationSmoothing:
-    _value: 10
-  PositionSmoothSpeed:
-    _value: 7.5
-  DeltaPrecisionCalibration:
-    _value: 0.03
-  UserSizePercentage:
-    _value: 0.25
-  LockUICursorSize:
-    _value: 1
-  CursorFactorScale:
-    _value: 1.5
-  DragThreshold:
-    _value: 6
-  StickersPath:
-    _value: 
-  BackgroundsPath:
-    _value: 
-  PrintImagePaths:
-    _list:
-    - C:/Users/smart/AppData/LocalLow/DefaultCompany/GraffWallV3/Exports
-  ReferenceWallWidth:
-    _value: 1.77778
-  PrintFormats:
-    _list:
-    - Name: DNP 4x6 Paysage (1800x1200px)
-      TargetResolution: {x: 1800, y: 1200}
-    - Name: DNP 4x6 Portrait (1200x1800px)
-      TargetResolution: {x: 1200, y: 1800}
-    - Name: Standard (10x15cm)
-      TargetResolution: {x: 1500, y: 1000}
-    - Name: HD (1920x1080)
-      TargetResolution: {x: 1920, y: 1080}
-    - Name: Square (Instagram)
-      TargetResolution: {x: 1080, y: 1080}
-  DefaultPrintPath:
-    _value: C:/DNP/HotFolderPrint/Prints/s4x6/DS620
+  Headless:
+    _value: 0
   DefaultExportPath:
     _value: C:\Users\smart\Desktop\Graffwall_V3\Export
-  SourceBannerPath:
-    _value: C:\Users\smart\Desktop\Graffwall_V3\Banners
-  DNPBannerPath:
-    _value: C:/DNP/HotFolderPrint/Borders
-  DNPBannerFileName_Landscape:
-    _value: a749bf15-cd9d-42ba-be72-f7022e152c3a
-  DNPBannerFileName_Portrait:
-    _value: C:/DNP/HotFolderPrint/Borders
   HotFolderEXEPath:
     _value: C:/DNP/HotFolderPrint/HotFolderPrint.exe
   SteamVREXEPath:
     _value: C:/Program Files (x86)/Steam/steamapps/common/SteamVR/bin/win64/vrstartup.exe
   EosUtilityEXEPath:
     _value: C:/Program Files (x86)/Canon/EOS Utility/EOS Utility.exe
+  DeltaPrecisionCalibration:
+    _value: 0.03
+  CursorFactorScale:
+    _value: 1.5
+  DragThreshold:
+    _value: 6
+  CursorRadiusMIN:
+    _value: 0.005
+  CursorRadiusMAX:
+    _value: 0.15
 --- !u!114 &3127728407676174906
 MonoBehaviour:
   m_ObjectHideFlags: 0

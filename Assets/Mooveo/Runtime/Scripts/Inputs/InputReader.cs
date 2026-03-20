@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class InputReader : MonoBehaviour
 {
     [SerializeField] private InputConfig _inputConfig;
+    [SerializeField] private bool _ignoreGlobalSettings = false;
     [SerializeField] public bool SimulateVR = false;
 
     public event Action<float> TriggerChanged;
@@ -29,6 +30,12 @@ public class InputReader : MonoBehaviour
 
     private void OnEnable()
     {
+        if (_ignoreGlobalSettings)
+        {
+            InitializeInput();
+            return;
+        }
+        
         if (GlobalSettings.Core.GlobalSettings.Instance == null)
         {
             // Robust fallback: Wait for GlobalSettings to initialize

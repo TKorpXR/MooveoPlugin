@@ -33,6 +33,7 @@ public enum EDeviceCheckerType //Si on créer une nouvelle class héritant de ID
     LeftController, 
     RightController, 
     AnyController,
+    Tracker,
     SteamVR, 
     EosUtility, 
     HotFolder 
@@ -187,16 +188,18 @@ public class CalibrationManager : MonoBehaviour
 
         bool leftConnected = false;
         bool rightConnected = false;
+        bool trackerConnected = false;
 
         // On parcourt les checkers actifs pour voir si une manette est là
         foreach (var kvp in _activeCheckers)
         {
             if (kvp.Key.Type == EDeviceCheckerType.LeftController) leftConnected = kvp.Value.IsConnected();
             if (kvp.Key.Type == EDeviceCheckerType.RightController) rightConnected = kvp.Value.IsConnected();
+            if (kvp.Key.Type == EDeviceCheckerType.Tracker) trackerConnected = kvp.Value.IsConnected();
             if (kvp.Key.Type == EDeviceCheckerType.AnyController && kvp.Value.IsConnected()) return true;
         }
 
-        return leftConnected || rightConnected;
+        return leftConnected || rightConnected || trackerConnected;
     }
 
     private void InitCheckers()
@@ -210,6 +213,7 @@ public class CalibrationManager : MonoBehaviour
                 case EDeviceCheckerType.HMD: checker = new HMDChecker(); break;
                 case EDeviceCheckerType.LeftController: checker = new LeftControllerChecker(); break;
                 case EDeviceCheckerType.RightController: checker = new RightControllerChecker(); break;
+                case EDeviceCheckerType.Tracker: checker = new TrackerControllerChecker(); break;
                 case EDeviceCheckerType.AnyController: checker = new AnyControllerChecker(); break;
                 case EDeviceCheckerType.SteamVR: checker = new SteamVRChecker(); break;
                 case EDeviceCheckerType.EosUtility: checker = new EosUtilitychecker(); break;
@@ -565,6 +569,12 @@ public class CalibrationManager : MonoBehaviour
     }
     private Vector3 CalculateCenter(List<Vector3> points, out int centerIndex)
     {
+        if (GlobalSettings.Core.GlobalSettings.Instance.Headless.Value)
+        {
+            centerIndex = 1;
+            return points[1];
+        }
+        
         Vector3 avg = (_points[0] + _points[1] + _points[2]) / 3f;
         
         centerIndex = 0;
@@ -583,6 +593,11 @@ public class CalibrationManager : MonoBehaviour
 
     private (Vector3 left, Vector3 right) CalculateLeftAndRight(List<Vector3> points, int centerIndex)
     {
+        if (GlobalSettings.Core.GlobalSettings.Instance.Headless.Value)
+        {
+            return (points[0], points[2]);
+        }
+        
         List<Vector3> extremites = new List<Vector3>();
         for (int i = 0; i < points.Count; i++)
         {
