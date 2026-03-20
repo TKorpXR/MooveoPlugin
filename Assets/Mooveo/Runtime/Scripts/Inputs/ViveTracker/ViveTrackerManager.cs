@@ -101,6 +101,16 @@ public class ViveTrackerManager : MonoBehaviour
                         // On passe l'index matériel directement au Driver !
                         driver.InitWithVIU(deviceIndex, roleName);
                         _activeTrackers.Add(deviceId, driver);
+                        InputReader inputReader = newTrackerObj.GetComponent<InputReader>();
+                        if (inputReader != null)
+                        {
+                            inputReader.SetInputConfigTargetRole(role);
+                        }
+                        ViveTrackerInputDebugger inputDebugger = newTrackerObj.GetComponent<ViveTrackerInputDebugger>();
+                        if (inputDebugger != null)
+                        {
+                            inputDebugger.InitWithVIU(deviceIndex, roleName);
+                        }
                     }
 
                     ControllerShortcutHandler shortcutHandler = newTrackerObj.GetComponent<ControllerShortcutHandler>();

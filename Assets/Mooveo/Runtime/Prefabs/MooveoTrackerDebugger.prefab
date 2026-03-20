@@ -10,11 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 8249581225519224478}
   - component: {fileID: 3905509855041539897}
-  - component: {fileID: 3673934659486749531}
-  - component: {fileID: 7781299085674605003}
-  - component: {fileID: 820817533215559935}
+  - component: {fileID: 5074601848787161480}
+  - component: {fileID: 2927131859964712301}
+  - component: {fileID: 1023093438925003685}
   m_Layer: 0
-  m_Name: MooveoTracker
+  m_Name: MooveoTrackerDebugger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -51,7 +51,7 @@ MonoBehaviour:
   _trackedPoseDriver: {fileID: 0}
   _controller: {fileID: 0}
   _debug: 0
---- !u!114 &3673934659486749531
+--- !u!114 &5074601848787161480
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -66,7 +66,7 @@ MonoBehaviour:
   _inputConfig: {fileID: 11400000, guid: debfeac7f84b44046b7a059b369f2275, type: 2}
   _ignoreGlobalSettings: 0
   SimulateVR: 0
---- !u!114 &7781299085674605003
+--- !u!114 &2927131859964712301
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -75,21 +75,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 793823722413383135}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea3b325e81b8ac746a32196e8ad632e3, type: 3}
+  m_Script: {fileID: 11500000, guid: 2e03bb1b19820c442bbfcfac918f6623, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Mooveo.Runtime::CalibrationController
-  _reader: {fileID: 3673934659486749531}
-  _shortcutHandler: {fileID: 820817533215559935}
+  m_EditorClassIdentifier: Mooveo.Runtime::DefaultController
+  _debug: 1
+  _reader: {fileID: 5074601848787161480}
+  _shortcutHandler: {fileID: 1023093438925003685}
   IsTracked: 0
   PlayerID: 0
-  _cursor: {fileID: 0}
-  _trackerTransform: {fileID: 0}
-  _factorRadiusMIN: 0.1
-  _factorRadiusMAX: 0.5
-  _uiClickInput: 0
-  _triggerThresholdTrue: 0.7
-  _triggerThresholdFalse: 0.6
---- !u!114 &820817533215559935
+--- !u!114 &1023093438925003685
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08bf3582949a8b94a95cadecfcf1bcc7, type: 3}
   m_Name: Debug
   m_EditorClassIdentifier: 
+  _type: 0
   TriggerAction: {fileID: 0}
   TriggerButton: {fileID: -292199561203151938, guid: c012a3715b918f346afe6be0c52d3694, type: 3}
   ThumbAction: {fileID: 0}
@@ -23,3 +24,9 @@ MonoBehaviour:
   RotationAction: {fileID: 0}
   IsTrackedAction: {fileID: 0}
   minTriggerValue: -1
+  VIUTargetRole: 0
+  VIUTriggerAxis: 2
+  VIUTriggerButton: 0
+  VIUAButton: 2
+  VIUBButton: 4
+  VIUThumbButton: 1

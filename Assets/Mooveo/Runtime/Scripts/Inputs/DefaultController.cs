@@ -4,6 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(InputReader))]
 public class DefaultController : MonoBehaviour
 {
+    [SerializeField] private bool _debug = false;
     [SerializeField] private InputReader _reader;
     [SerializeField] protected ControllerShortcutHandler _shortcutHandler;
 
@@ -29,37 +30,37 @@ public class DefaultController : MonoBehaviour
     }
     public virtual void HandleTrigger(float value)
     {
-        
+        if(_debug) Debug.Log($"[DefaultController] Trigger value: {value}");
     }
     
     public virtual void HandleTriggerPressed( )
     {
-        
+        if(_debug) Debug.Log($"[DefaultController] Trigger pressed");
     }
 
     public virtual void HandleAPressed()
     {
-        
+        if(_debug) Debug.Log($"[DefaultController] A pressed");
     }
 
     public virtual void HandleAReleased()
     {
-        
+        if(_debug) Debug.Log($"[DefaultController] A released");
     }
 
     public virtual void HandleBPressed()
     {
-        
+        if(_debug) Debug.Log($"[DefaultController] B pressed");
     }
 
     public virtual void HandleBReleased()
     {
-        
+        if(_debug) Debug.Log($"[DefaultController] B released");
     }
 
     public virtual void HandleThumb()
     {
-        
+        if(_debug) Debug.Log($"[DefaultController] Thumb Handling");
     }
 
     public void HandleIsTracked(bool isTracked)

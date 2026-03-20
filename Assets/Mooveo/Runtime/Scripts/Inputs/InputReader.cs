@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using HTC.UnityPlugin.Vive;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,6 +9,7 @@ public class InputReader : MonoBehaviour
     [SerializeField] private InputConfig _inputConfig;
     [SerializeField] private bool _ignoreGlobalSettings = false;
     [SerializeField] public bool SimulateVR = false;
+    [SerializeField] private bool _debug = false;
 
     public event Action<float> TriggerChanged;
     public event Action TriggerPressed;
@@ -25,8 +27,17 @@ public class InputReader : MonoBehaviour
     
     // Simulation variables
     private bool _simulatingTrigger = false;
+    
+    //ViveInputUtility variables
+    private bool _prevVIUTrigger = false;
+    private bool _prevVIUA = false;
+    private bool _prevVIUB = false;
+    private bool _prevVIUThumb = false;
+    private float _lastVIUTriggerValue = -1f;
 
     private Coroutine _initCoroutine;
+
+    public void SetInputConfigTargetRole(TrackerRole role) => _inputConfig.VIUTargetRole = role;
 
     private void OnEnable()
     {
@@ -85,8 +96,74 @@ public class InputReader : MonoBehaviour
         {
             HandleSimulation();
         }
+        if (_inputConfig != null && _inputConfig.VIUTargetRole != HTC.UnityPlugin.Vive.TrackerRole.Invalid)
+        {
+            HandleVIUInputs();
+        }
     }
 
+    private void HandleVIUInputs()
+    {
+       uint deviceIndex = HTC.UnityPlugin.Vive.ViveRole.GetDeviceIndexEx(_inputConfig.VIUTargetRole);
+        if (deviceIndex == HTC.UnityPlugin.VRModuleManagement.VRModule.INVALID_DEVICE_INDEX) return;
+        var state = HTC.UnityPlugin.VRModuleManagement.VRModule.GetCurrentDeviceState(deviceIndex);
+        if (state == null || !state.isConnected) return;
+        
+        float currentTrigger = state.GetAxisValue(_inputConfig.VIUTriggerAxis);
+        if (Mathf.Abs(currentTrigger - _lastVIUTriggerValue) > 0.01f)
+        {
+            _lastVIUTriggerValue = currentTrigger;
+            if (_debug) Debug.Log($"<color=orange>[InputReader VIU]</color> Axe {_inputConfig.VIUTriggerAxis} Modifié : {currentTrigger:F2}");
+            TriggerChanged?.Invoke(currentTrigger);
+        }
+        
+        bool curTriggerBtn = state.GetButtonPress(_inputConfig.VIUTriggerButton);
+        if (curTriggerBtn && !_prevVIUTrigger) 
+        {
+            if (_debug) Debug.Log($"<color=cyan>[InputReader VIU]</color> Bouton {_inputConfig.VIUTriggerButton} PRESSÉ");
+            TriggerPressed?.Invoke();
+        }
+        if (!curTriggerBtn && _prevVIUTrigger) 
+        {
+            if (_debug) Debug.Log($"<color=cyan>[InputReader VIU]</color> Bouton {_inputConfig.VIUTriggerButton} RELÂCHÉ");
+            TriggerReleased?.Invoke();
+        }
+        _prevVIUTrigger = curTriggerBtn;
+        
+        bool curABtn = state.GetButtonPress(_inputConfig.VIUAButton);
+        if (curABtn && !_prevVIUA) 
+        {
+            if (_debug) Debug.Log($"<color=cyan>[InputReader VIU]</color> Bouton A ({_inputConfig.VIUAButton}) PRESSÉ");
+            AButtonPressed?.Invoke();
+        }
+        if (!curABtn && _prevVIUA) 
+        {
+            if (_debug) Debug.Log($"<color=cyan>[InputReader VIU]</color> Bouton A ({_inputConfig.VIUAButton}) RELÂCHÉ");
+            AButtonReleased?.Invoke();
+        }
+        _prevVIUA = curABtn;
+        
+        bool curBBtn = state.GetButtonPress(_inputConfig.VIUBButton);
+        if (curBBtn && !_prevVIUB) 
+        {
+            if (_debug) Debug.Log($"<color=cyan>[InputReader VIU]</color> Bouton B ({_inputConfig.VIUBButton}) PRESSÉ");
+            BButtonPressed?.Invoke();
+        }
+        if (!curBBtn && _prevVIUB) 
+        {
+            if (_debug) Debug.Log($"<color=cyan>[InputReader VIU]</color> Bouton B ({_inputConfig.VIUBButton}) RELÂCHÉ");
+            BButtonReleased?.Invoke();
+        }
+        _prevVIUB = curBBtn;
+        
+        bool curThumbBtn = state.GetButtonPress(_inputConfig.VIUThumbButton);
+        if (curThumbBtn && !_prevVIUThumb) 
+        {
+            if (_debug) Debug.Log($"<color=cyan>[InputReader VIU]</color> Bouton Thumb ({_inputConfig.VIUThumbButton}) PRESSÉ");
+            ThumbButtonPressed?.Invoke();
+        }
+        _prevVIUThumb = curThumbBtn;
+    }
     private void HandleSimulation()
     {
         if (Mouse.current == null) return;
