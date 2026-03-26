@@ -56,62 +56,62 @@
 }
 
 .icon-back {
-    background-image: url("project://database/Assets/Resources/Icons/arrow_back.png?fileID=21300000&guid=b2dd517d81cb63646bb58362267ee83b&type=3#arrow_back");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/arrow_back.png?fileID=21300000&guid=b2dd517d81cb63646bb58362267ee83b&type=3#arrow_back");
 }
 
 .icon-close {
-    background-image: url("project://database/Assets/Resources/Icons/close.png?fileID=21300000&guid=350765ca7783cec45855f7cdcc56f2b2&type=3#close");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/close.png?fileID=21300000&guid=350765ca7783cec45855f7cdcc56f2b2&type=3#close");
 }
 
 .icon-brush {
-    background-image: url("project://database/Assets/Resources/Icons/brush.png?fileID=21300000&guid=e7db57489f6d02846bb0e12c93c00f37&type=3#brush");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/brush.png?fileID=21300000&guid=e7db57489f6d02846bb0e12c93c00f37&type=3#brush");
 }
 
 .icon-undo {
-    background-image: url("project://database/Assets/Resources/Icons/undo.png?fileID=21300000&guid=7d1fc9f7827839f46a69cfcdba883505&type=3#undo");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/undo.png?fileID=21300000&guid=7d1fc9f7827839f46a69cfcdba883505&type=3#undo");
 }
 
 .icon-check {
-    background-image: url("project://database/Assets/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
 }
 
 .icon-trash {
-    background-image: url("project://database/Assets/Resources/Icons/delete.png?fileID=21300000&guid=a00a54315705a114f9957186107e129a&type=3#delete");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/delete.png?fileID=21300000&guid=a00a54315705a114f9957186107e129a&type=3#delete");
 }
 
 .icon-gallery {
-    background-image: url("project://database/Assets/Resources/Icons/gallery.png?fileID=21300000&guid=aae597da5daf0304ba50d491fe3af55f&type=3#gallery");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/gallery.png?fileID=21300000&guid=aae597da5daf0304ba50d491fe3af55f&type=3#gallery");
 }
 
 .icon-banner {
-    background-image: url("project://database/Assets/Resources/Icons/banner.png?fileID=21300000&guid=ccdcd6502082ee6459552e4a2f92fb0b&type=3#banner");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/banner.png?fileID=21300000&guid=ccdcd6502082ee6459552e4a2f92fb0b&type=3#banner");
 }
 
 .icon-preview {
-    background-image: url("project://database/Assets/Resources/Icons/eye.png?fileID=21300000&guid=33182ccb3513b1f4796672e22a6f3ef8&type=3#eye");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/eye.png?fileID=21300000&guid=33182ccb3513b1f4796672e22a6f3ef8&type=3#eye");
 }
 
 .icon-capture {
-    background-image: url("project://database/Assets/Resources/Icons/camera.png?fileID=21300000&guid=95a285c8479b354479a27570f269a075&type=3#camera");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/camera.png?fileID=21300000&guid=95a285c8479b354479a27570f269a075&type=3#camera");
 }
 
 .icon-folder {
-    background-image: url("project://database/Assets/Resources/Icons/folder.png?fileID=21300000&guid=916e1eb062697a04a9b7660a1be98dd5&type=3#folder");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/folder.png?fileID=21300000&guid=916e1eb062697a04a9b7660a1be98dd5&type=3#folder");
 }
 
 .icon-print {
-    background-image: url("project://database/Assets/Resources/Icons/print.png?fileID=21300000&guid=b9fb8bf36630767478bf28f7cc4aaa53&type=3#print");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/print.png?fileID=21300000&guid=b9fb8bf36630767478bf28f7cc4aaa53&type=3#print");
 }
 
 .icon-save {
-    background-image: url("project://database/Assets/Resources/Icons/save.png?fileID=21300000&guid=fa2ee5f200f74a6429bd08a91ed2beea&type=3#save");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/save.png?fileID=21300000&guid=fa2ee5f200f74a6429bd08a91ed2beea&type=3#save");
 }
 
 .icon-refresh {
     background-image: resource("Icons/refresh");
 }
 .icon-color-picker {
-    background-image: url("project://database/Assets/Resources/Icons/palette.png?fileID=21300000&guid=b91d80ac8fee6e747a40ecbb843acdc6&type=3#palette");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/palette.png?fileID=21300000&guid=b91d80ac8fee6e747a40ecbb843acdc6&type=3#palette");
 }
 
 .vision-icon-button {
@@ -207,23 +207,23 @@
 }
 
 .icon-gallery {
-    background-image: url("project://database/Assets/Resources/Icons/gallery.png?fileID=21300000&guid=aae597da5daf0304ba50d491fe3af55f&type=3#gallery");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/gallery.png?fileID=21300000&guid=aae597da5daf0304ba50d491fe3af55f&type=3#gallery");
 }
 
 .icon-banner {
-    background-image: url("project://database/Assets/Resources/Icons/banner.png?fileID=21300000&guid=ccdcd6502082ee6459552e4a2f92fb0b&type=3#banner");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/banner.png?fileID=21300000&guid=ccdcd6502082ee6459552e4a2f92fb0b&type=3#banner");
 }
 
 .icon-preview {
-    background-image: url("project://database/Assets/Resources/Icons/eye.png?fileID=21300000&guid=33182ccb3513b1f4796672e22a6f3ef8&type=3#eye");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/eye.png?fileID=21300000&guid=33182ccb3513b1f4796672e22a6f3ef8&type=3#eye");
 }
 
 .icon-capture {
-    background-image: url("project://database/Assets/Resources/Icons/camera.png?fileID=21300000&guid=95a285c8479b354479a27570f269a075&type=3#camera");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/camera.png?fileID=21300000&guid=95a285c8479b354479a27570f269a075&type=3#camera");
 }
 
 .icon-folder {
-    background-image: url("project://database/Assets/Resources/Icons/folder.png?fileID=21300000&guid=916e1eb062697a04a9b7660a1be98dd5&type=3#folder");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/folder.png?fileID=21300000&guid=916e1eb062697a04a9b7660a1be98dd5&type=3#folder");
 }
 
 .sidebar-button {
@@ -605,7 +605,7 @@
 }
 
 .icon-status-ok {
-    background-image: url("project://database/Assets/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
     -unity-background-image-tint-color: rgb(46, 204, 113);
 }
 
@@ -651,7 +651,7 @@
     height: 40px;
     opacity: 0;
     -unity-background-scale-mode: scale-to-fit;
-    background-image: url("project://database/Assets/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
     -unity-background-image-tint-color: rgb(46, 204, 113);
 }
 
@@ -663,7 +663,7 @@
     border-color: rgb(255, 91, 83);
 }
 .calibration-point.error .calibration-point-icon {
-    background-image: url("project://database/Assets/Resources/Icons/close.png?fileID=21300000&guid=350765ca7783cec45855f7cdcc56f2b2&type=3#close");
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/close.png?fileID=21300000&guid=350765ca7783cec45855f7cdcc56f2b2&type=3#close");
     -unity-background-image-tint-color: rgb(231, 76, 60);
     opacity: 1;
 }
@@ -726,7 +726,7 @@
 
 .icon-cube-green {
     /* Placeholder for the cube icon if not available, simply a colored box or use a known icon */
-     background-image: url("project://database/Assets/Resources/Icons/box.png?fileID=21300000&guid=fakeguid&type=3#box"); /* Use generic if specific not found */
+     background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/box.png?fileID=21300000&guid=fakeguid&type=3#box"); /* Use generic if specific not found */
      -unity-background-object-fit: cover;
 }
 
