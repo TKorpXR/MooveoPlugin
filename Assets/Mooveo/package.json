@@ -15,6 +15,13 @@
     "tracking",
     "calibration"
   ],
+  "samples": [
+    {
+      "displayName": "Mooveo Scenes",
+      "description": "Scenes de test pour le tracking",
+      "path": "Samples~"
+    }
+  ],
   "author": {
     "name": "Enzo Bossé",
     "email": "bosseenzo6@gmail.com"
