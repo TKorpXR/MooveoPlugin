@@ -33,7 +33,7 @@ public static class MooveoConfigManager
     /// <returns>retourne un <see cref="MooveoConfig"/> contenant des variables lisibles par les autres scripts</returns>
     public static MooveoConfig Load()
     {
-        if (!Exists()) return null;
+        if (!Exists()) return new MooveoConfig();
 
         string json = File.ReadAllText(FilePath);
         MooveoConfig config = JsonUtility.FromJson<MooveoConfig>(json);

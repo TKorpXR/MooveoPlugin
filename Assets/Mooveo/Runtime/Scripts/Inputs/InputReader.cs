@@ -1,12 +1,19 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Valve.VR;
 
+public enum ConfigMode { InputConfig, OVRInput }
 public class InputReader : MonoBehaviour
 {
-    [SerializeField] private InputConfig _inputConfig;
+    public ConfigMode ConfigMode;
+    [SerializeField, ShowIf("ConfigMode", ConfigMode.InputConfig)] private InputConfig _inputConfig;
     [SerializeField] public bool SimulateVR = false;
+    [Tooltip("Sélectionnez le rôle de ce tracker (LeftHand ou RightHand)")]
+    [ShowIf("ConfigMode", ConfigMode.OVRInput)]public ETrackedControllerRole TargetRole = ETrackedControllerRole.LeftHand;
 
     public event Action<float> TriggerChanged;
     public event Action TriggerPressed;
@@ -26,6 +33,17 @@ public class InputReader : MonoBehaviour
     private bool _simulatingTrigger = false;
 
     private Coroutine _initCoroutine;
+
+    #region OpenVR Vive Trackers variables
+
+    private readonly ulong triggerMask = 1ul << (int)EVRButtonId.k_EButton_SteamVR_Trigger; // Pin 4
+    private readonly ulong gripMask    = 1ul << (int)EVRButtonId.k_EButton_Grip;            // Pin 3
+    private readonly ulong menuMask    = 1ul << (int)EVRButtonId.k_EButton_ApplicationMenu; // Pin 2
+    
+    // Dictionnaire pour stocker l'état précédent de chaque appareil (si plusieurs trackers)
+    private Dictionary<uint, ulong> _previousButtonsState = new Dictionary<uint, ulong>();
+
+    #endregion
 
     private void OnEnable()
     {
@@ -77,6 +95,58 @@ public class InputReader : MonoBehaviour
         if (SimulateVR)
         {
             HandleSimulation();
+        }
+        else if (ConfigMode == ConfigMode.OVRInput) HandleOpenVRRawInput();
+    }
+
+    private void HandleOpenVRRawInput()
+    {
+        var system = OpenVR.System;
+        if (system == null) return;
+        
+        VREvent_t vrEvent = new VREvent_t();
+        uint eventSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VREvent_t));
+        while (system.PollNextEvent(ref vrEvent, eventSize)) { }
+        
+        uint targetDeviceIndex = system.GetTrackedDeviceIndexForControllerRole(TargetRole);
+        
+        if (targetDeviceIndex == OpenVR.k_unTrackedDeviceIndexInvalid) return;
+        
+        uint size = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VRControllerState_t));
+        VRControllerState_t state = new VRControllerState_t();
+        
+        if (system.GetControllerState(targetDeviceIndex, ref state, size))
+        {
+            ulong currentButtons = state.ulButtonPressed;
+            
+            if (!_previousButtonsState.ContainsKey(targetDeviceIndex))
+                _previousButtonsState[targetDeviceIndex] = 0;
+
+            ulong prevButtons = _previousButtonsState[targetDeviceIndex];
+            
+            bool curTrigger = (currentButtons & triggerMask) != 0;
+            bool prevTrigger = (prevButtons & triggerMask) != 0;
+            if (curTrigger && !prevTrigger) 
+            { 
+                TriggerPressed?.Invoke(); 
+                TriggerChanged?.Invoke(1f); 
+            }
+            if (!curTrigger && prevTrigger) 
+            { 
+                TriggerReleased?.Invoke(); 
+                TriggerChanged?.Invoke(0f); 
+            }
+            
+            bool curGrip = (currentButtons & gripMask) != 0;
+            bool prevGrip = (prevButtons & gripMask) != 0;
+            if (curGrip && !prevGrip) AButtonPressed?.Invoke();
+            if (!curGrip && prevGrip) AButtonReleased?.Invoke();
+            
+            bool curMenu = (currentButtons & menuMask) != 0;
+            bool prevMenu = (prevButtons & menuMask) != 0;
+            if (curMenu && !prevMenu) ThumbButtonPressed?.Invoke();
+
+            _previousButtonsState[targetDeviceIndex] = currentButtons;
         }
     }
 

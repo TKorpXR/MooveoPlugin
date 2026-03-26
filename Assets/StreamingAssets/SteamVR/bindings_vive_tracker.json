@@ -1,0 +1,62 @@
+{
+  "app_key" : "application.generated.unity.mooveo.exe",
+  "bindings" : {
+    "/actions/main" : {
+      "sources" : [
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/hand/left/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/hand/right/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/foot/left/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/foot/right/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/knee/left/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/knee/right/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/chest/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/waist/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/shoulder/left/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/shoulder/right/input/trigger"
+        }
+      ]
+    }
+  },
+  "controller_type" : "vive_tracker",
+  "description" : "Auto-Binding Universel Mooveo pour tous les rôles",
+  "name" : "Mooveo Kiosk Binding"
+}

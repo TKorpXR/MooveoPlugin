@@ -523,6 +523,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59bdbf1d4b6afb747a593009adc0e2b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _sceneName: 
   _doesLaunchPopup: {fileID: 0}
   _cursorPrefab: {fileID: 4609635392149292052, guid: f0aa8706de8a52541b48328a37eeef50, type: 3}
   _userUiCanvas: {fileID: 1875930695}
@@ -535,12 +536,12 @@ MonoBehaviour:
   _devicesToCheck:
   - Key: SteamVR
     Label: SteamVR
-    Type: 4
+    Type: 5
     RequiresExe: 1
   - Key: AnyController
     Label: AnyController
     Type: 3
-    RequiresExe: 1
+    RequiresExe: 0
   _debugSlider: {fileID: 0}
 --- !u!1 &1873943182
 GameObject:
@@ -612,6 +613,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UICalibrationToolkit
   _docOverlay: {fileID: 1873943183}
   _docWorld: {fileID: 1074222892}
+  _canvasCursors: {fileID: 1875930696}
   _zoneRadiusCm: 5
   _uiWidthPixels: 1920
   _uiPanelPPU: 100
@@ -763,85 +765,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e906d23c377458c49a98598c559f1ea7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GlobalSettings.Core::GlobalSettings.Core.GlobalSettings
-  VR:
-    _value: 1
-  ThresholdDepth:
-    _value: 0.001
-  PaintingOpacityMIN:
-    _value: 0.1
-  PaintingOpacityMAX:
-    _value: 1
-  PaintingRadiusMIN:
-    _value: 0.005
-  PaintingRadiusMAX:
-    _value: 0.15
-  PaintingDepthMIN:
-    _value: 0.01
-  PaintingDepthMAX:
-    _value: 2
-  PaintingTriggerThreshold:
-    _value: 0.1
-  PaintingFrequencyMIN:
-    _value: 50
-  PaintingFrequencyMAX:
-    _value: 100
-  PaintingSmoothing:
-    _value: 5
-  PaintingSmoothingSampleCount:
-    _value: 5
-  StickerRotationSmoothing:
-    _value: 10
-  PositionSmoothSpeed:
-    _value: 7.5
-  DeltaPrecisionCalibration:
-    _value: 0.03
-  UserSizePercentage:
-    _value: 0.25
-  LockUICursorSize:
-    _value: 1
-  CursorFactorScale:
-    _value: 1.5
-  DragThreshold:
-    _value: 6
-  StickersPath:
-    _value: 
-  BackgroundsPath:
-    _value: 
-  PrintImagePaths:
-    _list:
-    - C:/Users/smart/AppData/LocalLow/DefaultCompany/GraffWallV3/Exports
-  ReferenceWallWidth:
-    _value: 1.77778
-  PrintFormats:
-    _list:
-    - Name: DNP 4x6 Paysage (1800x1200px)
-      TargetResolution: {x: 1800, y: 1200}
-    - Name: DNP 4x6 Portrait (1200x1800px)
-      TargetResolution: {x: 1200, y: 1800}
-    - Name: Standard (10x15cm)
-      TargetResolution: {x: 1500, y: 1000}
-    - Name: HD (1920x1080)
-      TargetResolution: {x: 1920, y: 1080}
-    - Name: Square (Instagram)
-      TargetResolution: {x: 1080, y: 1080}
-  DefaultPrintPath:
-    _value: C:/DNP/HotFolderPrint/Prints/s4x6/DS620
+  Headless:
+    _value: 0
   DefaultExportPath:
     _value: C:\Users\smart\Desktop\Graffwall_V3\Export
-  SourceBannerPath:
-    _value: C:\Users\smart\Desktop\Graffwall_V3\Banners
-  DNPBannerPath:
-    _value: C:/DNP/HotFolderPrint/Borders
-  DNPBannerFileName_Landscape:
-    _value: a749bf15-cd9d-42ba-be72-f7022e152c3a
-  DNPBannerFileName_Portrait:
-    _value: C:/DNP/HotFolderPrint/Borders
   HotFolderEXEPath:
     _value: C:/DNP/HotFolderPrint/HotFolderPrint.exe
   SteamVREXEPath:
     _value: C:/Program Files (x86)/Steam/steamapps/common/SteamVR/bin/win64/vrstartup.exe
   EosUtilityEXEPath:
     _value: C:/Program Files (x86)/Canon/EOS Utility/EOS Utility.exe
+  DeltaPrecisionCalibration:
+    _value: 0.03
+  CursorFactorScale:
+    _value: 1.5
+  DragThreshold:
+    _value: 6
+  CursorRadiusMIN:
+    _value: 0.005
+  CursorRadiusMAX:
+    _value: 0.15
 --- !u!114 &3127728407676174906
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -13,10 +13,14 @@ public class MooveoDeviceManager : MonoBehaviour
     [SerializeField, Tooltip("Prefab Generique avec un DefaultController")] private GameObject _controllerBasePrefab;
     [SerializeField] private Transform _controllersContainer;
     
-    [Header("Input Configuration")]
+    [Header("Input Configuration (Unity Input System)")]
     [SerializeField] private InputConfig _leftHandConfig;
     [SerializeField] private InputConfig _rightHandConfig;
     [SerializeField] private InputConfig _trackerConfig;
+
+    [Header("OpenVR Integration (Kiosk Mode)")]
+    [Tooltip("Cochez cette case pour forcer l'écoute des Pogo Pins via OpenVR pour les Vive Trackers")]
+    [SerializeField] private bool _useOpenVRForTrackers = false;
 
     public event Action<DefaultController> OnPlayerSpawned;
     public event Action<DefaultController> OnPlayerRemoved;
@@ -70,36 +74,67 @@ public class MooveoDeviceManager : MonoBehaviour
     private void CheckAndSpawn(InputDevice device)
     {
         if (_activeDevices.ContainsKey(device)) return;
+        
         // On ne gère que les appareils de Tracking (Manettes ou Vive Trackers)
         if (!(device is TrackedDevice)) return;
+        
         InputConfig configToUse = null;
         int playerID = -1;
+        string roleName = "Unknown";
+        
+        // Variables pour l'injection OpenVR
+        Valve.VR.ETrackedControllerRole openVrRole = Valve.VR.ETrackedControllerRole.Invalid;
+        bool useOpenVRMode = false;
+
         bool isLeft = device.usages.Contains(CommonUsages.LeftHand);
         bool isRight = device.usages.Contains(CommonUsages.RightHand);
+        bool isTrackerDevice = device.name.Contains("Tracker") || device.name.Contains("Generic");
+
         if (isLeft)
         {
-            configToUse = _leftHandConfig;
+            configToUse = _leftHandConfig; // Toujours assigné pour gérer la position spatiale
             playerID = 0;
+            roleName = "Left";
+            
+            // OPTIONNEL : On override le système de boutons si le toggle OpenVR est actif ET que c'est un Tracker
+            if (_useOpenVRForTrackers && isTrackerDevice)
+            {
+                useOpenVRMode = true;
+                openVrRole = Valve.VR.ETrackedControllerRole.LeftHand;
+            }
         }
         else if (isRight)
         {
-            configToUse = _rightHandConfig;
+            configToUse = _rightHandConfig; // Toujours assigné
             playerID = 1;
+            roleName = "Right";
+            
+            // OPTIONNEL : On override si OpenVR est actif
+            if (_useOpenVRForTrackers && isTrackerDevice)
+            {
+                useOpenVRMode = true;
+                openVrRole = Valve.VR.ETrackedControllerRole.RightHand;
+            }
         }
-        else if (device.name.Contains("Tracker") || device.name.Contains("Generic")) 
+        else if (isTrackerDevice) 
         {
-            configToUse = _trackerConfig;
+            configToUse = _trackerConfig; // Toujours assigné
             playerID = _trackerIdCounter;
+            roleName = "Tracker";
             _trackerIdCounter++;
+            
+            // Note : Si on a un 3ème tracker (ex: Pied) et qu'on utilise OpenVR, 
+            // il faudra étendre cette logique pour assigner d'autres rôles OpenVR.
         }
+
         if (configToUse != null && playerID != -1)
         {
             if (_spawnedPlayerIDs.Contains(playerID)) return;
-            SpawnDevice(device, configToUse, playerID, isLeft ? "Left" : isRight ? "Right" : "Tracker");
+            SpawnDevice(device, configToUse, playerID, roleName, useOpenVRMode, openVrRole);
         }
     }
 
-    private void SpawnDevice(InputDevice device, InputConfig config, int playerID, string roleName)
+    private void SpawnDevice(InputDevice device, InputConfig config, int playerID, string roleName, bool useOpenVRMode, Valve.VR.ETrackedControllerRole openVrRole)
     {
         if (_controllerBasePrefab == null) return;
         
@@ -108,20 +143,34 @@ public class MooveoDeviceManager : MonoBehaviour
         
         if (instance.TryGetComponent(out InputReader reader))
         {
-            reader.SetInputConfig(config);
-        }
-        
-        if (instance.TryGetComponent(out TrackedPoseDriver driver))
-        {
-            if (config.PositionAction != null)
-                driver.positionInput = new InputActionProperty(config.PositionAction);
-            if (config.RotationAction != null)
-                driver.rotationInput = new InputActionProperty(config.RotationAction);
+            if (useOpenVRMode)
+            {
+                reader.ConfigMode = ConfigMode.OVRInput;
+                reader.TargetRole = openVrRole;
+                if (instance.TryGetComponent(out SteamVR_Tracker tracker))
+                {
+                    tracker.SetRole(openVrRole);
+                }
+            }
+            else
+            {
+                reader.ConfigMode = ConfigMode.InputConfig;
+                reader.SetInputConfig(config);
+                if (instance.TryGetComponent(out TrackedPoseDriver driver))
+                {
+                    if (config != null && config.PositionAction != null)
+                        driver.positionInput = new InputActionProperty(config.PositionAction);
+                    if (config != null && config.RotationAction != null)
+                        driver.rotationInput = new InputActionProperty(config.RotationAction);
+                }
+            }
         }
         
         if (instance.TryGetComponent(out DefaultController baseController))
         {
             baseController.PlayerID = playerID;
+            baseController.HandleIsTracked(true);
+            
             _activeDevices.Add(device, baseController);
             _spawnedPlayerIDs.Add(playerID);
             
@@ -132,12 +181,12 @@ public class MooveoDeviceManager : MonoBehaviour
     
     protected virtual void SetupPlayer(DefaultController newPlayer)
     {
-        Debug.Log($"[Mooveo SDK] Joueur de base {newPlayer.PlayerID} connecté.");
+        Debug.Log($"<color=yellow>[Mooveo SDK]</color> Joueur {newPlayer.PlayerID} connecté. (Tracker OpenVR: {newPlayer.GetComponent<InputReader>().ConfigMode})");
     }
     
     protected virtual void RemovePlayer(DefaultController playerToRemove)
     {
-        Debug.Log($"[Mooveo SDK] Joueur {playerToRemove.PlayerID} déconnecté.");
+        Debug.Log($"<color=yellow>[Mooveo SDK]</color> Joueur {playerToRemove.PlayerID} déconnecté.");
     }
     
     private void RemoveDevice(InputDevice device)

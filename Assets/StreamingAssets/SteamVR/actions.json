@@ -1,0 +1,74 @@
+{
+  "actions": [
+    {
+      "name": "/actions/main/in/TrackerTrigger",
+      "type": "boolean"
+    }
+  ],
+  "action_sets": [
+    {
+      "name": "/actions/main",
+      "usage": "single"
+    }
+  ],
+  "default_bindings": [
+    {
+      "controller_type": "vive_tracker",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_left_foot",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_right_foot",
+      "binding_url": "bindings_vive_tracker_right_foot.json"
+    },
+    {
+      "controller_type": "vive_tracker_left_shoulder",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_right_shoulder",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_left_elbow",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_right_elbow",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_left_knee",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_right_knee",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_waist",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_chest",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_camera",
+      "binding_url": "bindings_vive_tracker.json"
+    },
+    {
+      "controller_type": "vive_tracker_keyboard",
+      "binding_url": "bindings_vive_tracker.json"
+    }
+  ],
+  "localization": [
+    {
+      "language_tag": "en_US",
+      "actions/main/in/TrackerTrigger": "Pogo Pin Trigger"
+    }
+  ]
+}

@@ -13,8 +13,8 @@ public class CalibrationController : DefaultController
 
     private void Start()
     {
-        GlobalSettings.Core.GlobalSettings.Instance.PaintingRadiusMIN.Bind(() => _factorRadiusMIN, value => _factorRadiusMIN = value);
-        GlobalSettings.Core.GlobalSettings.Instance.PaintingRadiusMAX.Bind(() => _factorRadiusMAX, value => _factorRadiusMAX = value);
+        GlobalSettings.Core.GlobalSettings.Instance.CursorRadiusMIN.Bind(() => _factorRadiusMIN, value => _factorRadiusMIN = value);
+        GlobalSettings.Core.GlobalSettings.Instance.CursorRadiusMAX.Bind(() => _factorRadiusMAX, value => _factorRadiusMAX = value);
 
     }
 

@@ -1,0 +1,22 @@
+{
+  "app_key" : "application.generated.unity.mooveo.exe",
+  "bindings" : {
+    "/actions/main" : {
+      "sources" : [
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/foot/right/input/trigger"
+        },
+        {
+          "inputs" : { "click" : { "output" : "/actions/main/in/TrackerTrigger" } },
+          "mode" : "button",
+          "path" : "/user/hand/right/input/trigger"
+        }
+      ]
+    }
+  },
+  "controller_type" : "vive_tracker_right_foot",
+  "description" : "Auto-Binding Mooveo pour Pied Droit",
+  "name" : "Mooveo Kiosk Pied Droit"
+}
