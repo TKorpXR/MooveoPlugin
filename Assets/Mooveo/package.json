@@ -9,8 +9,7 @@
     "com.unity.xr.management": "4.4.0",
     "com.unity.xr.interaction.toolkit": "2.5.2",
     "com.unity.xr.openxr": "1.10.0",
-    "com.dbrizov.naughtyattributes": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
-    "com.bl0bli.globalsettings": "file:../GlobalSettings"
+    "com.valvesoftware.unity.openvr": "2.7.3"
   },
   "keywords": [
     "vr",
