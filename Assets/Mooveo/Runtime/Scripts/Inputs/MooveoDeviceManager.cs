@@ -156,12 +156,11 @@ public class MooveoDeviceManager : MonoBehaviour
             {
                 reader.ConfigMode = ConfigMode.InputConfig;
                 reader.SetInputConfig(config);
-                if (instance.TryGetComponent(out TrackedPoseDriver driver))
+                if (instance.TryGetComponent(out DefaultController controller))
                 {
-                    if (config != null && config.PositionAction != null)
-                        driver.positionInput = new InputActionProperty(config.PositionAction);
-                    if (config != null && config.RotationAction != null)
-                        driver.rotationInput = new InputActionProperty(config.RotationAction);
+                    controller.SetupTrackedPoseDriver(
+                        new InputActionProperty(config.PositionAction), 
+                        new InputActionProperty(config.RotationAction));
                 }
             }
         }

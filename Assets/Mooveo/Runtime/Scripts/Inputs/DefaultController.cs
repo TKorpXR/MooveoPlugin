@@ -1,9 +1,12 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem.XR;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(InputReader))]
 public class DefaultController : MonoBehaviour
 {
+    [SerializeField] protected TrackedPoseDriver _poseDriver;
     [SerializeField] private InputReader _reader;
     [SerializeField] protected ControllerShortcutHandler _shortcutHandler;
     [SerializeField] private bool _debug = false;
@@ -28,6 +31,20 @@ public class DefaultController : MonoBehaviour
     {
         Unbind();
     }
+    
+    public void SetupTrackedPoseDriver(InputActionProperty position, InputActionProperty rotation)
+    {
+        if (_poseDriver != null)
+        {
+            _poseDriver.positionInput = position;
+            _poseDriver.rotationInput = rotation;
+        }
+        else 
+        {
+            Debug.LogWarning($"[{gameObject.name}] TrackedPoseDriver manquant sur le prefab !");
+        }
+    }
+    
     public virtual void HandleTrigger(float value)
     {
         if (_debug) Debug.Log($"[{nameof(DefaultController)}] HandleTrigger called with value: {value}");
