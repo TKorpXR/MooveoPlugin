@@ -14,9 +14,9 @@ public class MooveoDeviceManager : MonoBehaviour
     [SerializeField] private Transform _controllersContainer;
     
     [Header("Input Configuration (Unity Input System)")]
-    [SerializeField] private InputConfig _leftHandConfig;
-    [SerializeField] private InputConfig _rightHandConfig;
-    [SerializeField] private InputConfig _trackerConfig;
+    [SerializeField] protected InputConfig _leftHandConfig;
+    [SerializeField] protected InputConfig _rightHandConfig;
+    [SerializeField] protected InputConfig _trackerConfig;
 
     [Header("OpenVR Integration (Kiosk Mode)")]
     [Tooltip("Cochez cette case pour forcer l'écoute des Pogo Pins via OpenVR pour les Vive Trackers")]
