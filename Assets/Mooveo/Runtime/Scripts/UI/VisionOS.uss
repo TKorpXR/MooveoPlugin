@@ -110,6 +110,7 @@
 .icon-refresh {
     background-image: resource("Icons/refresh");
 }
+
 .icon-color-picker {
     background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/palette.png#palette");
 }
@@ -578,8 +579,6 @@
     border-left-color: rgb(10, 132, 255);
 }
 
-/* Calibration UI Styles */
-
 .device-row {
     flex-direction: row;
     justify-content: space-between;
@@ -605,28 +604,24 @@
 }
 
 .icon-status-ok {
-    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/check.png#check");
+    background-image: resource("Icons/check");
     -unity-background-image-tint-color: rgb(46, 204, 113);
 }
 
 .icon-status-loading {
-    /* Spinner style is handled by .spinner class usually, but if we use an icon: */
     width: 30px;
     height: 30px;
     border-radius: 50%;
     border-width: 3px;
     border-color: rgba(255, 255, 255, 0.2);
     border-top-color: white;
-    /* Rotation needs to be handled in C# or via unity simpler animation if possible, or just use the .spinner class */
 }
 
-/* Calibration Points */
 .calibration-point {
     position: absolute;
     width: 80px;
     height: 80px;
     border-radius: 40px;
-    /* Border handled by C# drawing */
     background-color: rgba(0, 0, 0, 0.2);
     align-items: center;
     justify-content: center;
@@ -658,10 +653,11 @@
 .calibration-point.valid {
     border-color: rgb(46, 204, 113);
 }
-.calibration-point.error {
 
+.calibration-point.error {
     border-color: rgb(255, 91, 83);
 }
+
 .calibration-point.error .calibration-point-icon {
     background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/close.png#close");
     -unity-background-image-tint-color: rgb(231, 76, 60);
@@ -669,10 +665,8 @@
 }
 
 .calibration-point.valid .calibration-point-fill {
-    /* No scale or bg color needed, drawing handles it */
 }
 
-/* Validation Buttons */
 .btn-action-green {
     width: 200px;
     height: 80px;
@@ -725,34 +719,29 @@
 }
 
 .icon-cube-green {
-    /* Placeholder for the cube icon if not available, simply a colored box or use a known icon */
-     background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/box.png?fileID=21300000&guid=fakeguid&type=3#box"); /* Use generic if specific not found */
-     -unity-background-object-fit: cover;
+    background-image: url("project://database/Packages/com.bl0bli.mooveo/Runtime/Resources/Icons/box.png?fileID=21300000&guid=fakeguid&type=3#box");
+    -unity-background-object-fit: cover;
 }
 
-/* Animations & Transitions Refactor */
 .animated-panel {
     transition-property: opacity, scale;
     transition-duration: 0.3s;
     transition-timing-function: ease-out-cubic;
     opacity: 1;
     scale: 1;
-    pointer-events: auto; /* Réactive les clics quand visible */
+    pointer-events: auto;
 }
 
 .animated-panel--hidden {
     opacity: 0;
-    scale: 0.95; /* Léger effet de recul quand ça disparaît */
-    pointer-events: none; /* TRÈS IMPORTANT : Empêche de cliquer sur un panneau invisible */
+    scale: 0.95;
+    pointer-events: none;
 }
 
-/* Fix for Unity UI Toolkit: pointer-events must be explicitly none on children too if they have defaults */
 .animated-panel--hidden > * {
     pointer-events: none;
 }
 
-
-/* Cascade Animation for Validation Buttons */
 .animated-panel .btn-action-blue,
 .animated-panel .btn-action-red,
 .animated-panel .btn-action-green {
@@ -768,8 +757,14 @@
     translate: 0 20px;
 }
 
-.animated-panel .btn-action-blue { transition-delay: 0.05s; }
-.animated-panel .btn-action-red { transition-delay: 0.1s; }
-.animated-panel .btn-action-green { transition-delay: 0.15s; }
+.animated-panel .btn-action-blue {
+    transition-delay: 0.05s;
+}
 
+.animated-panel .btn-action-red {
+    transition-delay: 0.1s;
+}
 
+.animated-panel .btn-action-green {
+    transition-delay: 0.15s;
+}
