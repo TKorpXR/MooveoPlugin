@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <Style src="project://database/Assets/Mooveo/Scripts/UI/VisionOS.uss" />
+    
+    <ui:VisualElement name="root" style="position: absolute; top: 20px; right: 20px; width: 20%; min-width: 250px; max-height: 80%; padding: 12px; pointer-events: auto;">
+        
+        <ui:ScrollView name="controllers-scroll" style="flex-grow: 1;">
+            <ui:VisualElement name="controllers-container" />
+        </ui:ScrollView>
+        
+    </ui:VisualElement>
+</ui:UXML>

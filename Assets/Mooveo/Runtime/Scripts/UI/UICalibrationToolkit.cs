@@ -45,7 +45,6 @@ public class UICalibrationToolkit : MonoBehaviour
     private Button _btnPopupRecalibrate;
     private Button _btnPopupLaunch;
     
-    private CalibrationController _tester;
     private Coroutine _mainFlowRoutine;
     private Coroutine _secondaryFlowRoutine;
     private bool _allDevicesValid = false;
@@ -64,6 +63,13 @@ public class UICalibrationToolkit : MonoBehaviour
     
     private float _targetProgress = 0f;
     private float _displayedProgress = 0f;
+    
+    private VisualElement _loadingOverlay;
+    private VisualElement _loadingSpinner;
+    private Label _loadingText;
+    private IVisualElementScheduledItem _spinnerAnim;
+    
+    private bool _subscribed = false;
 
     private void Awake()
     {
@@ -83,9 +89,11 @@ public class UICalibrationToolkit : MonoBehaviour
         
         if (CalibrationManager.instance != null)
         {
+            Debug.Log("[UICalibrationToolkit] Subscribing to calibration events");
             CalibrationManager.instance.OnInitDevicesUI += BuildDevicesList;
             CalibrationManager.instance.OnUpdateDeviceUI += UpdateDeviceStatusUI;
             CalibrationManager.instance.OnAllDevicesReady += HandleAllDevicesReady;
+            _subscribed = true;
         }
     }
 
@@ -101,6 +109,13 @@ public class UICalibrationToolkit : MonoBehaviour
     }
     private void Start()
     {
+        if (!_subscribed)
+        {
+            CalibrationManager.instance.OnInitDevicesUI += BuildDevicesList;
+            CalibrationManager.instance.OnUpdateDeviceUI += UpdateDeviceStatusUI;
+            CalibrationManager.instance.OnAllDevicesReady += HandleAllDevicesReady;
+            _subscribed = true;
+        }
         AnimateSpinners();
     }
 
@@ -132,6 +147,43 @@ public class UICalibrationToolkit : MonoBehaviour
                 _devicesList = _rootOverlay.Q<ScrollView>("devices-list");
                 _pnlCalibrationOverlay = _rootOverlay.Q<VisualElement>("pnl-calibration-overlay");
                 _calibrationMarksContainer = _rootOverlay.Q<VisualElement>("calibration-marks-container");
+                
+                _loadingOverlay = _rootOverlay.Q<VisualElement>("loading-overlay");
+                _loadingSpinner = _rootOverlay.Q<VisualElement>("loading-spinner");
+                _loadingText = _rootOverlay.Q<Label>("loading-text");
+                
+                // CRÉATION DYNAMIQUE SI NON TROUVÉ DANS L'UXML
+                if (_loadingOverlay == null && _pnlCalibrationOverlay != null)
+                {
+                    _loadingOverlay = new VisualElement();
+                    _loadingOverlay.name = "loading-overlay";
+                    _loadingOverlay.style.position = Position.Absolute;
+                    _loadingOverlay.style.left = 0;
+                    _loadingOverlay.style.top = 0;
+                    _loadingOverlay.style.right = 0;
+                    _loadingOverlay.style.bottom = 0;
+                    _loadingOverlay.style.alignItems = Align.Center;
+                    _loadingOverlay.style.justifyContent = Justify.Center;
+                    _loadingOverlay.style.backgroundColor = new Color(0, 0, 0, 0.7f); // Voile assombri
+
+                    _loadingText = new Label();
+                    _loadingText.name = "loading-text";
+                    _loadingText.style.color = Color.white;
+                    _loadingText.style.fontSize = 28;
+                    _loadingText.style.marginBottom = 20;
+
+                    _loadingSpinner = new VisualElement();
+                    _loadingSpinner.name = "loading-spinner";
+                    _loadingSpinner.style.width = 60;
+                    _loadingSpinner.style.height = 60;
+                    _loadingSpinner.AddToClassList("icon-status-loading");
+
+                    _loadingOverlay.Add(_loadingText);
+                    _loadingOverlay.Add(_loadingSpinner);
+                    _pnlCalibrationOverlay.Add(_loadingOverlay);
+                }
+                
+                if (_loadingOverlay != null) _loadingOverlay.style.display = DisplayStyle.None;
             }
             
             if (_docWorld != null)
@@ -302,6 +354,7 @@ public class UICalibrationToolkit : MonoBehaviour
     }
     private void AddDeviceRow(string key, string label)
     {
+        Debug.Log($"key {key} | label {label}");
         VisualElement row = new VisualElement();
         row.AddToClassList("device-row");
         row.name = $"device-row-{key}";
@@ -408,10 +461,7 @@ public class UICalibrationToolkit : MonoBehaviour
             
             yield return StartCoroutine(WaitForControllerClick());
             
-            if (_tester != null)
-            {
-                CalibrationManager.instance.TestCalibrationSetupPlayArea(_tester);
-            }
+            CalibrationManager.instance.TestCalibrationSetupPlayArea();
             
             ShowPanel(_pnlValidationFooter);
         }
@@ -429,7 +479,6 @@ public class UICalibrationToolkit : MonoBehaviour
         {
             if (_waitingForClick && !_calibratingStep)
             {
-                if (calibrationController != null) _tester = calibrationController;
                 _controllerClicked = true;
                 //Debug.Log("UICalibrationToolkit -> Controller click received");
             }
@@ -461,10 +510,6 @@ public class UICalibrationToolkit : MonoBehaviour
                 _targetProgress = 0f;
                 _displayedProgress = 0f;
                 _currentProgress = 0f;
-            }
-            else
-            {
-                OnCalibrationFinished(); 
             }
         }
         private void OnUpdatePointProgress(float value)
@@ -534,6 +579,7 @@ public class UICalibrationToolkit : MonoBehaviour
     }
         private void ClearCalibrationUIData()
         {
+            SetValidationUI(false);
             _allDevicesValid = false;
             _calibratingStep = false;
             _controllerClicked = false;
@@ -566,6 +612,72 @@ public class UICalibrationToolkit : MonoBehaviour
         
             SetPanelVisibility(_pnlValidationFooter, false);
         }
+
+        /// <summary>
+        /// Affiche ou masque l'UI de chargement de la validation asynchrone pour UI Toolkit.
+        /// </summary>
+        public void SetValidationUI(bool isVisible, string message = "")
+        {
+            if (_loadingOverlay != null)
+            {
+                _loadingOverlay.style.display = isVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (isVisible)
+            {
+                if (_loadingText != null)
+                {
+                    _loadingText.text = message;
+                    _loadingText.style.display = DisplayStyle.Flex;
+                }
+
+                if (_loadingSpinner != null)
+                {
+                    _loadingSpinner.style.display = DisplayStyle.Flex;
+                    if (_spinnerAnim == null)
+                    {
+                        _spinnerAnim = _loadingSpinner.schedule.Execute(() => {
+                            _loadingSpinner.transform.rotation = _loadingSpinner.transform.rotation * Quaternion.Euler(0, 0, -15);
+                        }).Every(30);
+                    }
+                    else
+                    {
+                        _spinnerAnim.Resume();
+                    }
+                }
+            }
+            else
+            {
+                if (_spinnerAnim != null)
+                {
+                    _spinnerAnim.Pause();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Marque tous les points avec la classe d'erreur visuelle (UI Toolkit) et affiche le message à l'écran.
+        /// </summary>
+        public void MarkAllPointsError(string errorMessage)
+        {
+            for (int i = 0; i < _nPointToCalibrate; i++)
+            {
+                if (i < _markElements.Count)
+                {
+                    var mark = _markElements[i];
+                    mark.AddToClassList("error");
+                    var icon = mark.Q<VisualElement>(className: "calibration-point-icon");
+                    if (icon != null) icon.style.opacity = 1f;
+                    
+                    mark.visible = true;
+                    mark.Q<VisualElement>(className: "calibration-point-fill")?.MarkDirtyRepaint();
+                }
+            }
+            
+            SetValidationUI(true, errorMessage);
+            if (_loadingSpinner != null) _loadingSpinner.style.display = DisplayStyle.None; // Cache le spinner pour laisser seule l'erreur visible
+        }
+
         private void SetCursorsInteractivity(bool isInteractive)
     {
         foreach(var cursor in _cursors)

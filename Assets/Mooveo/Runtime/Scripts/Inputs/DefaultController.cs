@@ -6,6 +6,10 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(InputReader))]
 public class DefaultController : MonoBehaviour
 {
+//#if UNITY_EDITOR
+    [SerializeField, Tooltip("Simule l'appui Trigger en éditeur sans manette")]
+    protected bool _simulateTrigger = false;
+//#endif
     [SerializeField] protected TrackedPoseDriver _poseDriver;
     [SerializeField] private InputReader _reader;
     [SerializeField] protected ControllerShortcutHandler _shortcutHandler;
@@ -14,6 +18,12 @@ public class DefaultController : MonoBehaviour
     public bool IsTracked = false;
 
     public int PlayerID;
+    
+    public bool SimulateTrigger 
+    { 
+        get => _simulateTrigger; 
+        set => _simulateTrigger = value; 
+    }
 
     private void OnValidate()
     {
@@ -90,6 +100,8 @@ public class DefaultController : MonoBehaviour
     {
         if (_reader == null) return;
 
+        _reader.IsTracked += HandleIsTracked;
+        
         _reader.TriggerChanged += HandleTrigger;
         _reader.TriggerPressed += HandleTriggerPressed;
 

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.htc.upm.vive.openxr": "https://github.com/ViveSoftware/VIVE-OpenXR.git?path=com.htc.upm.vive.openxr",
     "com.unity.inputsystem": "1.7.0",
     "com.unity.nuget.newtonsoft-json": "3.2.2",
     "com.unity.textmeshpro": "3.0.6",
@@ -8,6 +9,7 @@
     "com.unity.xr.openxr": "1.16.1",
     "com.valvesoftware.unity.openvr": "file:C:/Users/smart/Downloads/com.valvesoftware.unity.openvr-1.2.4.tgz",
     "com.unity.modules.animation": "1.0.0",
+    "com.unity.modules.imageconversion": "1.0.0",
     "com.unity.modules.jsonserialize": "1.0.0"
   }
 }

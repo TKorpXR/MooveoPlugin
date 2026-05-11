@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4753576926144825523}
   - component: {fileID: 1283783107348164837}
   - component: {fileID: 3716427947902173142}
+  - component: {fileID: 8467865285465124803}
   - component: {fileID: 2451074379892072148}
   - component: {fileID: 3098756355525660805}
   m_Layer: 0
@@ -48,7 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c58bec91ad36764e987b04ac554b66c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamVR_Tracker
-  device: -1
+  device: 1
   setPosition: 1
   setRotation: 1
   positionSmoothTime: 0
@@ -56,7 +57,7 @@ MonoBehaviour:
   velocity: {x: 0, y: 0, z: 0}
   angularVelocity: {x: 0, y: 0, z: 0}
   tracking: 0
-  controllerRole: 0
+  controllerRole: 2
 --- !u!114 &3716427947902173142
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -70,10 +71,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Mooveo.Runtime::InputReader
   ConfigMode: 1
-  _inputConfig: {fileID: 0}
+  _inputConfig: {fileID: 11400000, guid: b2c053a4bd6c8b8468237702758c1dcc, type: 2}
   SimulateVR: 0
-  TargetRole: 0
---- !u!114 &2451074379892072148
+  TargetRole: 2
+--- !u!114 &8467865285465124803
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -82,9 +83,33 @@ MonoBehaviour:
   m_GameObject: {fileID: 124393901766384250}
   m_Enabled: 1
   m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea3b325e81b8ac746a32196e8ad632e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CalibrationController
+  _simulateTrigger: 0
+  _poseDriver: {fileID: 0}
+  _reader: {fileID: 3716427947902173142}
+  _shortcutHandler: {fileID: 3098756355525660805}
+  _debug: 1
+  IsTracked: 0
+  PlayerID: 0
+  _cursor: {fileID: 0}
+  _factorRadiusMIN: 0.1
+  _factorRadiusMAX: 0.5
+--- !u!114 &2451074379892072148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124393901766384250}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e03bb1b19820c442bbfcfac918f6623, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Mooveo.Runtime::DefaultController
+  _simulateTrigger: 0
+  _poseDriver: {fileID: 0}
   _reader: {fileID: 3716427947902173142}
   _shortcutHandler: {fileID: 3098756355525660805}
   _debug: 1
@@ -102,7 +127,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6a483887141b5c43be595b5974abcad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Mooveo.Runtime::ControllerShortcutHandler
-  _shortcuts: []
+  _shortcuts:
+  - Name: 
+    Button1: 0
+    Button2: 0
+    OnTrigger:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!1 &8471354469724622297
 GameObject:
   m_ObjectHideFlags: 0
@@ -121,7 +152,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7063185112818785997
 Transform:
   m_ObjectHideFlags: 0

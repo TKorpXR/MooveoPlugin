@@ -13,6 +13,8 @@ public enum UIInteractionMode
 public class CursorInteractor : MonoBehaviour
 {
     [SerializeField] private UIInteractionMode _interactionMode = UIInteractionMode.PhysicsRaycast3D;
+    [SerializeField] private bool _debug = false;
+
     private Camera _camera;
     private PointerEventData _pointer;
     private readonly List<RaycastResult> _results = new List<RaycastResult>();
@@ -133,37 +135,43 @@ public class CursorInteractor : MonoBehaviour
         
         if (_isClicking && !_clicked) // DOWN
         {
-            //Debug.Log($"<color=orange>[UI_DETECTION]</color> Click detected | HitUI: {hitUIToolkit} | Element: {(_currentVisualElement != null ? _currentVisualElement.name : "null")}");
             if (newTarget != null)
             {
-            // UI TOOLKIT CLICK
-                        //Debug.Log($"<color=orange>[UI_DETECTION]</color> Click detected | HitUI: {hitUIToolkit} | Element: {(_currentVisualElement != null ? _currentVisualElement.name : "null")}");
-
-                if (hitUIToolkit && _currentVisualElement != null)
+                if (hitUIToolkit)
                 {
-                    //Debug.Log($"<color=green>[UI_EVENT_SEND]</color> Sending PointerDown to: {_currentVisualElement.name}");
-                    _pressedVisualElement = _currentVisualElement;
-                    _pressStartScreenPos = screenPos;
-                    UsingUIToolkitPointerEvent(PointerDownEvent.GetPooled(), _pressedVisualElement, _alignedPointerPos, _pointer.delta);
+                    if (_currentVisualElement != null)
+                    {
+                        _pressedVisualElement = _currentVisualElement;
+                        _pressStartScreenPos = screenPos;
+                        UsingUIToolkitPointerEvent(PointerDownEvent.GetPooled(), _pressedVisualElement, _alignedPointerPos, _pointer.delta);
+                    }
+                    else
+                    {
+                        // On a frappé le BoxCollider global avec le Raycast3D, mais UI Toolkit n'a intercepté aucun élément cliquable/visible (renvoie null).
+                        // Cela équivaut systématiquement à un clic dans le vide (hors UI).
+                        OnClickedOutside?.Invoke();
+                    }
                 }
-
-                // UGUI CLICK
-                _pressedTarget = newTarget;
-                _pointer.pressPosition = _pointer.position;
-                _pointer.pointerPressRaycast = firstResult;
-                _pointer.rawPointerPress = newTarget;
-                _pointer.eligibleForClick = true;
-                
-                GameObject dragHandler = ExecuteEvents.GetEventHandler<IDragHandler>(newTarget);
-                if (dragHandler != null)
+                else
                 {
-                    ExecuteEvents.Execute(dragHandler, _pointer, ExecuteEvents.initializePotentialDrag);
-                    _pointer.pointerDrag = dragHandler;
-                }
+                    // UGUI CLICK
+                    _pressedTarget = newTarget;
+                    _pointer.pressPosition = _pointer.position;
+                    _pointer.pointerPressRaycast = firstResult;
+                    _pointer.rawPointerPress = newTarget;
+                    _pointer.eligibleForClick = true;
+                    
+                    GameObject dragHandler = ExecuteEvents.GetEventHandler<IDragHandler>(newTarget);
+                    if (dragHandler != null)
+                    {
+                        ExecuteEvents.Execute(dragHandler, _pointer, ExecuteEvents.initializePotentialDrag);
+                        _pointer.pointerDrag = dragHandler;
+                    }
 
-                GameObject pressed = ExecuteEvents.ExecuteHierarchy(newTarget, _pointer, ExecuteEvents.pointerDownHandler)
-                                     ?? ExecuteEvents.GetEventHandler<IPointerClickHandler>(newTarget);
-                _pointer.pointerPress = pressed;
+                    GameObject pressed = ExecuteEvents.ExecuteHierarchy(newTarget, _pointer, ExecuteEvents.pointerDownHandler)
+                                         ?? ExecuteEvents.GetEventHandler<IPointerClickHandler>(newTarget);
+                    _pointer.pointerPress = pressed;
+                }
             }
             else
             {
@@ -216,11 +224,11 @@ public class CursorInteractor : MonoBehaviour
                 }
                 else if (isDragIntent)
                 {
-                    Debug.Log($"[XR_DEBUG] Click ignored: User intended to scroll (Distance: {travelDistance})");
+                    if (_debug) Debug.Log($"[XR_DEBUG] Click ignored: User intended to scroll (Distance: {travelDistance})");
                 }
                 else
                 {
-                    Debug.LogWarning($"[XR_DEBUG] Click cancelled: Pressed on '{_pressedVisualElement?.name}' but released on '{_currentVisualElement?.name}'");
+                    if (_debug) Debug.LogWarning($"[XR_DEBUG] Click cancelled: Pressed on '{_pressedVisualElement?.name}' but released on '{_currentVisualElement?.name}'");
                 }
                 
                 _pressedVisualElement = null;
@@ -270,32 +278,13 @@ public class CursorInteractor : MonoBehaviour
                 Vector3 localHit = uiDoc.transform.InverseTransformPoint(physicsHit.Value.point);
                 panelPos = new Vector2(localHit.x, localHit.y);
                 picked = uiDoc.rootVisualElement.panel.Pick(panelPos);
-
-                if (picked == null)
-                {
-                     Vector2 flippedPos = new Vector2(localHit.x, -localHit.y);
-                     Debug.Log($"Flipped pos: {flippedPos}");
-                     VisualElement flippedPick = uiDoc.rootVisualElement.panel.Pick(flippedPos);
-                     if (flippedPick != null)
-                     {
-                         picked = flippedPick;
-                         panelPos = flippedPos;
-                     }
-                }
             }
             else
             {
-                panelPos = RuntimePanelUtils.ScreenToPanel(uiDoc.rootVisualElement.panel, screenPos);
-                Debug.Log($"Panel pos in else: {panelPos}");
-                picked = uiDoc.rootVisualElement.panel.Pick(panelPos);
+                //panelPos = RuntimePanelUtils.ScreenToPanel(uiDoc.rootVisualElement.panel, screenPos);
+                //Debug.Log($"Panel pos in else: {panelPos}");
+                //picked = uiDoc.rootVisualElement.panel.Pick(panelPos);
             }
-
-            if (picked == null && !physicsHit.HasValue)
-            {
-                picked = uiDoc.rootVisualElement.panel.Pick(panelPos);
-                Debug.Log($"Panel pos in if: {panelPos}");
-            }
-
             
             if (picked != null)
             {
@@ -321,11 +310,11 @@ public class CursorInteractor : MonoBehaviour
                 if(picked != null)
                 {
                     string elementName = string.IsNullOrEmpty(picked.name) ? "Élément_Sans_Nom" : picked.name;
-                    Debug.Log($"<color=cyan>[HOVER]</color> Curseur entre sur : <b>{elementName}</b> <i>({picked.GetType().Name})</i>");
+                    //Debug.Log($"<color=cyan>[HOVER]</color> Curseur entre sur : <b>{elementName}</b> <i>({picked.GetType().Name})</i>");
                 }
                 else if (_currentVisualElement != null)
                 {
-                    Debug.Log($"<color=grey>[HOVER]</color> Curseur sort dans le vide.");
+                    if (_debug) Debug.Log($"<color=grey>[HOVER]</color> Curseur sort dans le vide.");
                 }
                 if (_currentVisualElement != null)
                     UsingUIToolkitPointerEvent(PointerLeaveEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
@@ -343,7 +332,7 @@ public class CursorInteractor : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"CRASH in HandleUI: {e.Message}\n{e.StackTrace}");
+            if (_debug) Debug.LogError($"CRASH in HandleUI: {e.Message}\n{e.StackTrace}");
         }
     }
 
@@ -358,7 +347,13 @@ public class CursorInteractor : MonoBehaviour
     private void UsingUIToolkitPointerEvent<T>(T evt, VisualElement target, Vector2 position, Vector2 delta = default) where T : PointerEventBase<T>, new()
     {
         evt.target = target;
-        
+
+        string targetName = string.IsNullOrEmpty(target?.name) ? "Élément_Sans_Nom" : target.name;
+        if (_debug && typeof(T).Name != "PointerMoveEvent")
+        {
+            Debug.Log($"<color=yellow>[UI_EVENT]</color> Envoi de <b>{typeof(T).Name}</b> vers <b>{targetName}</b> (<i>{target?.GetType().Name}</i>) | Pos: {position} | Delta: {delta}");
+        }
+
         // Use Reflection to set protected/private setters
         var posProp = PointerEventReflection<T>.PositionProp;
         if (posProp != null) posProp.SetValue(evt, (Vector3)position);
@@ -370,12 +365,7 @@ public class CursorInteractor : MonoBehaviour
         var idProp = PointerEventReflection<T>.PointerIdProp;
         if (idProp != null) idProp.SetValue(evt, 1); // Use ID 1 for main cursor
         
-        if (evt is PointerDownEvent || evt is PointerUpEvent || evt is ClickEvent)
-        {
-            //Debug.Log($"<color=cyan>[UI_EVENT_DETAILS]</color> Dispatching {typeof(T).Name} to {target.name} | PointerID: 1 | Pos: {position}");
-        }
         target.SendEvent(evt);
-        
     }
     
     public void SetClicking(bool isClicking)

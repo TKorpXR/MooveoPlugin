@@ -10,6 +10,11 @@ public class CalibrationController : DefaultController
     private Vector3 _canvasPosition;
     private float _simulatePaintDecalRadius;
     private float _simulatedPaintDepth;
+    
+//#if UNITY_EDITOR
+    private bool _wasSimulateTrigger = false;
+//#endif
+
 
     private void Start()
     {
@@ -20,14 +25,34 @@ public class CalibrationController : DefaultController
 
     private void Update()
     {
+//#if UNITY_EDITOR
+        if (_simulateTrigger != _wasSimulateTrigger)
+        {
+            if (_simulateTrigger)
+            {
+                HandleTrigger(1f);
+                HandleTriggerPressed();
+            }
+            else
+            {
+                HandleTrigger(0f);
+            }
+
+            _wasSimulateTrigger = _simulateTrigger;
+        }
+//#endif
+        
+        if (_cam == null) return;
         _simulatedPaintDepth = Vector3.Distance(transform.position, _canvasPosition); // TODO FAIRE EN SORTE QUE LA DEPTH NE DEPENDE PAS DU CENTRE MAIS DE TOUTE LA SURFACE
         _simulatePaintDecalRadius = Mathf.Lerp(_factorRadiusMIN, _factorRadiusMAX, Mathf.Clamp01(_simulatedPaintDepth));
         if(_cursor != null) 
             _cursor.UpdateCursor(transform, _cam, _simulatePaintDecalRadius);
+
     }
 
     public override void HandleTrigger(float value)
     {
+        base.HandleTrigger(value);
         if (_cursor != null)
         {
             if (value > 0.7f)
@@ -43,31 +68,35 @@ public class CalibrationController : DefaultController
 
     public override void HandleTriggerPressed( )
     {
+        base.HandleTriggerPressed();
         CalibrationManager.instance.HandleClick(transform);
     }
 
+    [ContextMenu("HandleAPressed")]
     public override void HandleAPressed()
     {
+        base.HandleAPressed();
         CalibrationManager.instance.NotifyUIClickOnce(this);
     }
 
     public override void HandleAReleased()
     {
-        
+        base.HandleAReleased();
     }
 
     public override void HandleBPressed()
     {
-        
+        base.HandleBPressed();
     }
 
     public override void HandleBReleased()
     {
-        
+        base.HandleBReleased();
     }
 
     public override void HandleThumb()
     {
+        base.HandleThumb();
         CalibrationManager.instance.HandleThumbClick();
     }
 
@@ -80,9 +109,15 @@ public class CalibrationController : DefaultController
         _cursor.Init();
     }
 
-    public void ClearTest()
+    private void OnDestroy()
     {
-        CalibrationManager.instance.RemoveTester(this);
-        if(_cursor != null) _cursor.Destroy(); //plus robuse, si on call la recalibration a un mauvais moment, evite un crash car le cursor a deja été destroy
+        if (CalibrationManager.instance != null)
+        {
+            CalibrationManager.instance.RemoveTester(this);
+        }
+        if (_cursor != null && _cursor.gameObject != null)
+        {
+            Destroy(_cursor.gameObject);
+        }
     }
 }

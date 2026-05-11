@@ -28,6 +28,7 @@ public class InputReader : MonoBehaviour
     public event Action<Vector3> PositionChanged;
     public event Action<Quaternion> RotationChanged;
     public event Action<int> IsTrackedChanged;
+    public event Action<bool> IsTracked;
     
     // Simulation variables
     private bool _simulatingTrigger = false;
@@ -40,8 +41,11 @@ public class InputReader : MonoBehaviour
     private readonly ulong gripMask    = 1ul << (int)EVRButtonId.k_EButton_Grip;            // Pin 3
     private readonly ulong menuMask    = 1ul << (int)EVRButtonId.k_EButton_ApplicationMenu; // Pin 2
     
+    private TrackedDevicePose_t[] _poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
+    
     // Dictionnaire pour stocker l'état précédent de chaque appareil (si plusieurs trackers)
     private Dictionary<uint, ulong> _previousButtonsState = new Dictionary<uint, ulong>();
+    private Dictionary<uint, bool> _previousTrackedState = new Dictionary<uint, bool>();
 
     #endregion
 
@@ -109,12 +113,31 @@ public class InputReader : MonoBehaviour
         while (system.PollNextEvent(ref vrEvent, eventSize)) { }
         
         uint targetDeviceIndex = system.GetTrackedDeviceIndexForControllerRole(TargetRole);
-        
         if (targetDeviceIndex == OpenVR.k_unTrackedDeviceIndexInvalid) return;
+
+        // --- 1. GESTION DU TRACKING (Garantie à 100% si le tracker est vu) ---
+        // On récupère les poses brutes de tous les appareils (sans demander les boutons)
+        system.GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin.TrackingUniverseStanding, 0f, _poses);
+        TrackedDevicePose_t pose = _poses[targetDeviceIndex];
         
+        bool isCurrentlyTracked = pose.bDeviceIsConnected && pose.bPoseIsValid;
+
+        if (!_previousTrackedState.ContainsKey(targetDeviceIndex))
+            _previousTrackedState[targetDeviceIndex] = false;
+
+        if (isCurrentlyTracked != _previousTrackedState[targetDeviceIndex])
+        {
+            _previousTrackedState[targetDeviceIndex] = isCurrentlyTracked;
+            IsTracked?.Invoke(isCurrentlyTracked); // Ça s'activera toujours, bouton ou pas !
+        }
+
+        // --- 2. GESTION DES BOUTONS (Pogo Pins) ---
         uint size = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VRControllerState_t));
         VRControllerState_t state = new VRControllerState_t();
         
+        // On utilise GetControllerState seul. 
+        // Si SteamVR refuse de donner les boutons sur cette frame (retourne false), 
+        // on ignore cette étape, mais le IsTracked (au-dessus) a quand même été mis à jour !
         if (system.GetControllerState(targetDeviceIndex, ref state, size))
         {
             ulong currentButtons = state.ulButtonPressed;
@@ -215,7 +238,13 @@ public class InputReader : MonoBehaviour
         
         BindAction(_inputConfig.IsTrackedAction, ctx => 
             IsTrackedChanged?.Invoke(ctx.ReadValue<int>()));
-        
+
+        if (ConfigMode == ConfigMode.InputConfig)
+        {
+            BindAction(_inputConfig.IsTrackedAction, ctx => 
+                IsTracked?.Invoke(ctx.ReadValue<bool>())); //TO DO CAST EN BOOL
+        }
+
         BindAction(_inputConfig.PositionAction, ctx => 
             PositionChanged?.Invoke(ctx.ReadValue<Vector3>()));
         
@@ -229,6 +258,8 @@ public class InputReader : MonoBehaviour
 
     private void Unbind()
     {
+        if (_inputConfig == null) return;
+
         UnbindAction(_inputConfig.TriggerAction,
             ctx => TriggerChanged?.Invoke(ctx.ReadValue<float>()),
             ctx => TriggerChanged?.Invoke(0f));

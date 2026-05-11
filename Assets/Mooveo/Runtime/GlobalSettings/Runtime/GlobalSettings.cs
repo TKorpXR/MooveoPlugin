@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace GlobalSettings.Core
@@ -18,6 +20,21 @@ public class GlobalSettings: MonoBehaviour
     
     [Tooltip("Indique si le mode headless est actif (sans casque => implique de n'avoir que des Tracker)")]
     public ObservableSetting<bool> Headless = new ObservableSetting<bool>() { Value = false };
+    
+    [Tooltip(
+        "Seuil de tolérance (en % de la largeur du mur) pour accepter que les points forment une ligne droite exclusive. Une valeur de 0.05 équivaut à un niveau de tolérance de 5%.")]
+    [Range(0f, 1f)]
+    [SerializeField]
+    private float LinearityThresholdEditor = 0.05f;
+
+    [Tooltip(
+        "Seuil de tolérance (en % de la largeur du mur) pour accepter que l'espacement entre Gauche->Centre et Centre->Droite soit symétrique. Une valeur de 0.05 équivaut à 5% de tolérance.")]
+    [Range(0f, 1f)]
+    [SerializeField]
+    private float SymmetryThresholdEditor = 0.15f;
+
+    [HideInInspector] public ObservableSetting<float> LinearityThreshold = new ObservableSetting<float>() { Value = 0.05f };
+    [HideInInspector] public ObservableSetting<float> SymmetryThreshold = new ObservableSetting<float>() { Value = 0.05f };
     
     public ObservableSetting<string> DefaultExportPath = new ObservableSetting<string>()
         { Value = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Export") };

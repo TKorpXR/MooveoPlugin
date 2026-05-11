@@ -11,6 +11,10 @@ using UnityEngine.XR;
 /// </summary>
 public class UICalibrationManager : MonoBehaviour
 {
+    [Header("UI Validation Phase")]
+    [SerializeField] private GameObject _loadingSpinner;
+    [SerializeField] private TextMeshProUGUI _loadingText;
+
     [Header("UI Calibration")] 
     [SerializeField] List<CalibrationCursorUI> _cursors = new List<CalibrationCursorUI>();
     [SerializeField] private RectTransform _canvasCursors;
@@ -43,7 +47,6 @@ public class UICalibrationManager : MonoBehaviour
 
     private int _currentIndexPoint = -1;
     private int _nPointToCalibrate = 3;
-    private CalibrationController _tester;
     private Coroutine _mainFlowRoutine, _secondaryFlowRoutine;
     
     private Dictionary<string, IDeviceChecker> _devices = new Dictionary<string, IDeviceChecker>();  
@@ -126,6 +129,38 @@ public class UICalibrationManager : MonoBehaviour
         _secondaryFlowRoutine = null;
     }
 
+    /// <summary>
+    /// Affiche ou masque l'UI de chargement de la validation asynchrone.
+    /// </summary>
+    public void SetValidationUI(bool isVisible, string message = "")
+    {
+        if (_loadingSpinner != null) _loadingSpinner.SetActive(isVisible);
+        if (_loadingText != null)
+        {
+            _loadingText.gameObject.SetActive(isVisible);
+            _loadingText.text = message;
+        }
+    }
+
+    /// <summary>
+    /// Marque tous les points avec l'icône d'erreur et affiche un message à l'écran.
+    /// </summary>
+    public void MarkAllPointsError(string errorMessage)
+    {
+        for (int i = 0; i < _nPointToCalibrate; i++)
+        {
+            if (i < _marksIcons.Count)
+            {
+                _marksIcons[i].enabled = true;
+                _marksIcons[i].sprite = _iconError;
+                _marksIcons[i].color = _colorError;
+            }
+        }
+        
+        SetValidationUI(true, errorMessage);
+        if (_loadingSpinner != null) _loadingSpinner.SetActive(false); // On cache le spinner lors d'une erreur
+    }
+
     
     /// <summary>
     /// Donne l'information au manager de passer a l'etape suivante. Cette fonction est appelé par le <see cref="CalibrationManager"/> lorsque l'on appuie sur A
@@ -135,7 +170,6 @@ public class UICalibrationManager : MonoBehaviour
     {
         if (_waitingForClick && !_calibratingStep)
         {
-            if (calibrationController != null) _tester = calibrationController;
             _controllerClicked = true;
             Debug.Log("UICalibrationManager → Controller click received");
         }
@@ -450,6 +484,7 @@ public class UICalibrationManager : MonoBehaviour
     }
     private void ClearCalibrationUIData()
     {
+        SetValidationUI(false);
         _allDevicesValid = false;
         _calibratingStep = false;
         _controllerClicked = false;
@@ -538,7 +573,7 @@ public class UICalibrationManager : MonoBehaviour
         _checkDevicePanelEnabled = false;
         _panelCheckDevices.SetActive(false);
         _animatorBtnAfterCalibration.PlayOpen();
-        CalibrationManager.instance.TestCalibrationSetupPlayArea(_tester);
+        CalibrationManager.instance.TestCalibrationSetupPlayArea();
     }
     private void OnCalibrationFinished()
     {

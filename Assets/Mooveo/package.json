@@ -1,6 +1,6 @@
 {
   "name": "com.bl0bli.mooveo",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "displayName": "Mooveo SDK",
   "description": "Système de tracking et calibration pour espaces interactifs 2D/3D.",
   "dependencies": {
