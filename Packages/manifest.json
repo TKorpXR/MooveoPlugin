@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.dbrizov.naughtyattributes": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
     "com.htc.upm.vive.openxr": "https://github.com/ViveSoftware/VIVE-OpenXR.git?path=com.htc.upm.vive.openxr",
     "com.unity.inputsystem": "1.7.0",
     "com.unity.nuget.newtonsoft-json": "3.2.2",
@@ -7,7 +8,7 @@
     "com.unity.xr.interaction.toolkit": "3.3.1",
     "com.unity.xr.management": "4.4.0",
     "com.unity.xr.openxr": "1.16.1",
-    "com.valvesoftware.unity.openvr": "file:C:/Users/smart/Downloads/com.valvesoftware.unity.openvr-1.2.4.tgz",
+    "com.valvesoftware.unity.openvr": "file:./local/com.valvesoftware.unity.openvr-1.2.4.tgz",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.imageconversion": "1.0.0",
     "com.unity.modules.jsonserialize": "1.0.0"
