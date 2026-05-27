@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08bf3582949a8b94a95cadecfcf1bcc7, type: 3}
   m_Name: LeftController
   m_EditorClassIdentifier: 
-  TriggerAction: {fileID: -4289430672226363583, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  TriggerButton: {fileID: -5982496924579745919, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  ThumbAction: {fileID: 6558622148059887818, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  ThumbButton: {fileID: -6131295136447488360, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  AButton: {fileID: 9049184944991486135, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  BButton: {fileID: -7391764202429031943, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  PositionAction: {fileID: -2024308242397127297, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  TriggerAction: {fileID: -4289430672226363583, guid: d348712bda248c246b8c49b3db54643f, type: 3}
+  TriggerButton: {fileID: -5982496924579745919, guid: d348712bda248c246b8c49b3db54643f, type: 3}
+  ThumbAction: {fileID: 6558622148059887818, guid: d348712bda248c246b8c49b3db54643f, type: 3}
+  ThumbButton: {fileID: -6131295136447488360, guid: d348712bda248c246b8c49b3db54643f, type: 3}
+  AButton: {fileID: 9049184944991486135, guid: d348712bda248c246b8c49b3db54643f, type: 3}
+  BButton: {fileID: -7391764202429031943, guid: d348712bda248c246b8c49b3db54643f, type: 3}
+  PositionAction: {fileID: -2024308242397127297, guid: d348712bda248c246b8c49b3db54643f, type: 3}
   ScrollAction: {fileID: 0}
-  RotationAction: {fileID: 8248158260566104461, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  IsTrackedAction: {fileID: 684395432459739428, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  RotationAction: {fileID: 8248158260566104461, guid: d348712bda248c246b8c49b3db54643f, type: 3}
+  IsTrackedAction: {fileID: 684395432459739428, guid: d348712bda248c246b8c49b3db54643f, type: 3}
   minTriggerValue: 0.2

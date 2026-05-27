@@ -66,6 +66,22 @@ namespace Mooveo.Editor
         // après une vérif (donc à pousser même si une cover_url existe déjà côté backend).
         private bool coverDirty;
 
+        [Serializable]
+        private class GameData
+        {
+            public string id;
+            public string name;
+            public string cover_url;
+            public string current_version;
+        }
+
+        private List<GameData> existingGames = new List<GameData>();
+        private string[] existingGameSlugs = new string[0];
+        private int selectedGameIndex = -1;
+
+        private float publishProgress = 0f;
+        private string publishProgressText = "";
+
         private bool busy;
         private string statusMessage = "";
         private MessageType statusType = MessageType.None;
@@ -154,6 +170,60 @@ namespace Mooveo.Editor
             {
                 DrawStepHeader("1", "Identité du jeu", GameInfoOk());
 
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField("Jeu existant", EditorStyles.miniBoldLabel);
+                    if (GUILayout.Button("Rafraîchir la liste", GUILayout.Width(150)))
+                    {
+                        _ = FetchGamesListAsync();
+                    }
+                }
+
+                if (existingGameSlugs != null && existingGameSlugs.Length > 0)
+                {
+                    int prevIndex = selectedGameIndex;
+                    selectedGameIndex = EditorGUILayout.Popup("Sélectionner", selectedGameIndex < 0 ? 0 : selectedGameIndex, existingGameSlugs);
+                    if (selectedGameIndex != prevIndex)
+                    {
+                        if (selectedGameIndex > 0)
+                        {
+                            var selectedGame = existingGames[selectedGameIndex - 1];
+                            gameId = selectedGame.id;
+                            gameName = selectedGame.name;
+                            
+                            EditorPrefs.SetString(PREF_GAME_ID, gameId);
+                            EditorPrefs.SetString(PREF_GAME_NAME, gameName);
+                            
+                            remoteState = string.IsNullOrEmpty(selectedGame.current_version) ? RemoteState.Declared : RemoteState.Published;
+                            remoteCurrentVersion = selectedGame.current_version;
+                            remoteCoverUrl = selectedGame.cover_url;
+                            remoteName = selectedGame.name;
+                            lastCheckedSlug = gameId;
+                            coverDirty = false;
+                        }
+                        else
+                        {
+                            gameId = "";
+                            gameName = Application.productName;
+                            remoteState = RemoteState.Unknown;
+                            remoteCurrentVersion = "";
+                            remoteCoverUrl = "";
+                            remoteName = "";
+                            lastCheckedSlug = "";
+                            coverDirty = false;
+                            
+                            EditorPrefs.SetString(PREF_GAME_ID, "");
+                            EditorPrefs.SetString(PREF_GAME_NAME, gameName);
+                        }
+                    }
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox("Clique sur 'Rafraîchir la liste' pour récupérer les jeux existants du serveur.", MessageType.None);
+                }
+
+                EditorGUILayout.Space(5);
+
                 EditorGUI.BeginChangeCheck();
                 gameId   = EditorGUILayout.TextField(new GUIContent("Game ID (slug)", "a-z, 0-9, tirets uniquement"), gameId);
                 gameName = EditorGUILayout.TextField("Nom affiché", gameName);
@@ -162,7 +232,14 @@ namespace Mooveo.Editor
                     EditorPrefs.SetString(PREF_GAME_ID, gameId);
                     EditorPrefs.SetString(PREF_GAME_NAME, gameName);
                     // Slug a changé → on invalide l'état remote
-                    if (gameId != lastCheckedSlug) remoteState = RemoteState.Unknown;
+                    if (gameId != lastCheckedSlug)
+                    {
+                        remoteState = RemoteState.Unknown;
+                        if (existingGames != null)
+                        {
+                            selectedGameIndex = existingGames.FindIndex(g => g.id == gameId) + 1;
+                        }
+                    }
                 }
 
                 EditorGUILayout.Space(4);
@@ -427,6 +504,13 @@ namespace Mooveo.Editor
                 {
                     _ = PackageAndPublishAsync();
                 }
+
+                if (publishProgress > 0f && publishProgress < 1f)
+                {
+                    EditorGUILayout.Space(4);
+                    var rect = GUILayoutUtility.GetRect(18, 18);
+                    EditorGUI.ProgressBar(rect, publishProgress, publishProgressText);
+                }
             }
         }
 
@@ -500,6 +584,61 @@ namespace Mooveo.Editor
                 remoteState = RemoteState.Unknown;
             }
             finally { busy = false; Repaint(); }
+        }
+
+        private async Task FetchGamesListAsync()
+        {
+            if (!ValidateConnection()) return;
+
+            busy = true;
+            SetStatus("Récupération de la liste des jeux...", MessageType.Info);
+            try
+            {
+                var url = backendUrl.TrimEnd('/') + "/api/admin/crud/games";
+                var req = new HttpRequestMessage(HttpMethod.Get, url);
+                req.Headers.TryAddWithoutValidation("X-Admin-Key", adminKey);
+                var resp = await http.SendAsync(req);
+                var text = await resp.Content.ReadAsStringAsync();
+
+                if (!resp.IsSuccessStatusCode)
+                {
+                    SetStatus($"Erreur backend ({(int)resp.StatusCode}) : {text}", MessageType.Error);
+                    return;
+                }
+
+                var arr = Newtonsoft.Json.Linq.JArray.Parse(text);
+                
+                var list = new List<GameData>();
+                foreach (var item in arr)
+                {
+                    list.Add(new GameData
+                    {
+                        id = item.Value<string>("id"),
+                        name = item.Value<string>("name"),
+                        cover_url = item.Value<string>("cover_url"),
+                        current_version = item.Value<string>("current_version")
+                    });
+                }
+
+                existingGames = list;
+                
+                var options = new List<string> { "< Nouveau Jeu >" };
+                options.AddRange(existingGames.Select(g => $"{g.id} ({g.name})"));
+                existingGameSlugs = options.ToArray();
+
+                selectedGameIndex = existingGames.FindIndex(g => g.id == gameId) + 1;
+
+                SetStatus($"Liste des jeux récupérée ({existingGames.Count} jeux).", MessageType.Info);
+            }
+            catch (Exception e)
+            {
+                SetStatus($"Erreur de récupération : {e.Message}", MessageType.Error);
+            }
+            finally
+            {
+                busy = false;
+                Repaint();
+            }
         }
 
         private async Task DeclareGameAsync()
@@ -602,9 +741,14 @@ namespace Mooveo.Editor
             if (!ValidateConnection() || !ValidateSlug()) return;
 
             busy = true;
+            publishProgress = 0.05f;
+            publishProgressText = "Création du ZIP…";
+            SetStatus(publishProgressText, MessageType.Info);
+            
             try
             {
-                SetStatus("Création du ZIP…", MessageType.Info);
+                EditorUtility.DisplayProgressBar("Publication de " + gameId, publishProgressText, publishProgress);
+
                 var projectRoot = Path.GetDirectoryName(Application.dataPath);
                 var artifactsDir = Path.Combine(projectRoot, "Builds", "_artifacts");
                 Directory.CreateDirectory(artifactsDir);
@@ -613,12 +757,18 @@ namespace Mooveo.Editor
                 if (File.Exists(zipPath)) File.Delete(zipPath);
                 ZipFile.CreateFromDirectory(buildDir, zipPath, System.IO.Compression.CompressionLevel.Optimal, includeBaseDirectory: false);
 
-                SetStatus("Calcul des checksums…", MessageType.Info);
+                publishProgress = 0.2f;
+                publishProgressText = "Calcul des checksums…";
+                SetStatus(publishProgressText, MessageType.Info);
+                EditorUtility.DisplayProgressBar("Publication de " + gameId, publishProgressText, publishProgress);
+
                 var zipChecksum = "sha256:" + Sha256OfFile(zipPath);
 
                 var fileList = new List<Dictionary<string, object>>();
-                foreach (var f in Directory.GetFiles(buildDir, "*", SearchOption.AllDirectories))
+                var files = Directory.GetFiles(buildDir, "*", SearchOption.AllDirectories);
+                for (int i = 0; i < files.Length; i++)
                 {
+                    var f = files[i];
                     var rel = f.Substring(buildDir.Length + 1).Replace('\\', '/');
                     fileList.Add(new Dictionary<string, object>
                     {
@@ -626,21 +776,37 @@ namespace Mooveo.Editor
                         { "hash", "sha256:" + Sha256OfFile(f) },
                         { "size", new FileInfo(f).Length },
                     });
+
+                    publishProgress = 0.2f + 0.1f * ((float)(i + 1) / files.Length);
+                    publishProgressText = $"Calcul des checksums ({i + 1}/{files.Length})…";
+                    EditorUtility.DisplayProgressBar("Publication de " + gameId, publishProgressText, publishProgress);
                 }
 
-                SetStatus("Upload du ZIP…", MessageType.Info);
+                publishProgress = 0.35f;
+                publishProgressText = "Upload du ZIP…";
+                SetStatus(publishProgressText, MessageType.Info);
+                EditorUtility.DisplayProgressBar("Publication de " + gameId, publishProgressText, publishProgress);
+                
                 var zipUrl = await UploadAssetAsync("zip", version, zipPath, "application/zip");
 
                 // Cover (si choisie et pas encore uploadée pour cette session)
                 string coverUrl = remoteCoverUrl;
                 if (string.IsNullOrEmpty(coverUrl) && !string.IsNullOrEmpty(coverPath) && File.Exists(coverPath))
                 {
-                    SetStatus("Upload de la cover…", MessageType.Info);
+                    publishProgress = 0.6f;
+                    publishProgressText = "Upload de la cover…";
+                    SetStatus(publishProgressText, MessageType.Info);
+                    EditorUtility.DisplayProgressBar("Publication de " + gameId, publishProgressText, publishProgress);
+                    
                     coverUrl = await UploadAssetAsync("cover", null, coverPath, GuessContentType(coverPath));
                     remoteCoverUrl = coverUrl;
                 }
 
-                SetStatus("Génération du manifest…", MessageType.Info);
+                publishProgress = 0.75f;
+                publishProgressText = "Génération du manifest…";
+                SetStatus(publishProgressText, MessageType.Info);
+                EditorUtility.DisplayProgressBar("Publication de " + gameId, publishProgressText, publishProgress);
+
                 var manifest = new Dictionary<string, object>
                 {
                     { "game_id", gameId },
@@ -656,10 +822,18 @@ namespace Mooveo.Editor
                 var manifestPath = Path.Combine(artifactsDir, "manifest.json");
                 File.WriteAllText(manifestPath, Newtonsoft.Json.JsonConvert.SerializeObject(manifest), new UTF8Encoding(false));
 
-                SetStatus("Upload du manifest…", MessageType.Info);
+                publishProgress = 0.85f;
+                publishProgressText = "Upload du manifest…";
+                SetStatus(publishProgressText, MessageType.Info);
+                EditorUtility.DisplayProgressBar("Publication de " + gameId, publishProgressText, publishProgress);
+                
                 var manifestUrl = await UploadAssetAsync("manifest", version, manifestPath, "application/json");
 
-                SetStatus("Finalisation…", MessageType.Info);
+                publishProgress = 0.95f;
+                publishProgressText = "Finalisation…";
+                SetStatus(publishProgressText, MessageType.Info);
+                EditorUtility.DisplayProgressBar("Publication de " + gameId, publishProgressText, publishProgress);
+
                 var publishBody = new Dictionary<string, string>
                 {
                     { "game_id", gameId },
@@ -676,14 +850,25 @@ namespace Mooveo.Editor
                 remoteName = gameName;
                 coverDirty = false;
 
+                publishProgress = 1.0f;
+                publishProgressText = "Publié !";
                 SetStatus($"Publié !\nVersion : {version}\nManifest : {manifestUrl}\nDownload : {zipUrl}", MessageType.Info);
             }
             catch (Exception e)
             {
+                publishProgress = 0f;
+                publishProgressText = "";
                 SetStatus($"Erreur publication : {e.Message}", MessageType.Error);
                 Debug.LogException(e);
             }
-            finally { busy = false; Repaint(); }
+            finally
+            {
+                busy = false;
+                publishProgress = 0f;
+                publishProgressText = "";
+                EditorUtility.ClearProgressBar();
+                Repaint();
+            }
         }
 
         // -------------------------------------------------------------------

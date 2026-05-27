@@ -1,12 +1,19 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Valve.VR;
 
+public enum ConfigMode { InputConfig, OVRInput }
 public class InputReader : MonoBehaviour
 {
-    [SerializeField] private InputConfig _inputConfig;
+    public ConfigMode ConfigMode;
+    [SerializeField, ShowIf("ConfigMode", ConfigMode.InputConfig)] private InputConfig _inputConfig;
     [SerializeField] public bool SimulateVR = false;
+    [Tooltip("Sélectionnez le rôle de ce tracker (LeftHand ou RightHand)")]
+    [ShowIf("ConfigMode", ConfigMode.OVRInput)]public ETrackedControllerRole TargetRole = ETrackedControllerRole.LeftHand;
 
     public event Action<float> TriggerChanged;
     public event Action TriggerPressed;
@@ -21,11 +28,26 @@ public class InputReader : MonoBehaviour
     public event Action<Vector3> PositionChanged;
     public event Action<Quaternion> RotationChanged;
     public event Action<int> IsTrackedChanged;
+    public event Action<bool> IsTracked;
     
     // Simulation variables
     private bool _simulatingTrigger = false;
 
     private Coroutine _initCoroutine;
+
+    #region OpenVR Vive Trackers variables
+
+    private readonly ulong triggerMask = 1ul << (int)EVRButtonId.k_EButton_SteamVR_Trigger; // Pin 4
+    private readonly ulong gripMask    = 1ul << (int)EVRButtonId.k_EButton_Grip;            // Pin 3
+    private readonly ulong menuMask    = 1ul << (int)EVRButtonId.k_EButton_ApplicationMenu; // Pin 2
+    
+    private TrackedDevicePose_t[] _poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
+    
+    // Dictionnaire pour stocker l'état précédent de chaque appareil (si plusieurs trackers)
+    private Dictionary<uint, ulong> _previousButtonsState = new Dictionary<uint, ulong>();
+    private Dictionary<uint, bool> _previousTrackedState = new Dictionary<uint, bool>();
+
+    #endregion
 
     private void OnEnable()
     {
@@ -77,6 +99,77 @@ public class InputReader : MonoBehaviour
         if (SimulateVR)
         {
             HandleSimulation();
+        }
+        else if (ConfigMode == ConfigMode.OVRInput) HandleOpenVRRawInput();
+    }
+
+    private void HandleOpenVRRawInput()
+    {
+        var system = OpenVR.System;
+        if (system == null) return;
+        
+        VREvent_t vrEvent = new VREvent_t();
+        uint eventSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VREvent_t));
+        while (system.PollNextEvent(ref vrEvent, eventSize)) { }
+        
+        uint targetDeviceIndex = system.GetTrackedDeviceIndexForControllerRole(TargetRole);
+        if (targetDeviceIndex == OpenVR.k_unTrackedDeviceIndexInvalid) return;
+
+        // --- 1. GESTION DU TRACKING (Garantie à 100% si le tracker est vu) ---
+        // On récupère les poses brutes de tous les appareils (sans demander les boutons)
+        system.GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin.TrackingUniverseStanding, 0f, _poses);
+        TrackedDevicePose_t pose = _poses[targetDeviceIndex];
+        
+        bool isCurrentlyTracked = pose.bDeviceIsConnected && pose.bPoseIsValid;
+
+        if (!_previousTrackedState.ContainsKey(targetDeviceIndex))
+            _previousTrackedState[targetDeviceIndex] = false;
+
+        if (isCurrentlyTracked != _previousTrackedState[targetDeviceIndex])
+        {
+            _previousTrackedState[targetDeviceIndex] = isCurrentlyTracked;
+            IsTracked?.Invoke(isCurrentlyTracked); // Ça s'activera toujours, bouton ou pas !
+        }
+
+        // --- 2. GESTION DES BOUTONS (Pogo Pins) ---
+        uint size = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VRControllerState_t));
+        VRControllerState_t state = new VRControllerState_t();
+        
+        // On utilise GetControllerState seul. 
+        // Si SteamVR refuse de donner les boutons sur cette frame (retourne false), 
+        // on ignore cette étape, mais le IsTracked (au-dessus) a quand même été mis à jour !
+        if (system.GetControllerState(targetDeviceIndex, ref state, size))
+        {
+            ulong currentButtons = state.ulButtonPressed;
+            
+            if (!_previousButtonsState.ContainsKey(targetDeviceIndex))
+                _previousButtonsState[targetDeviceIndex] = 0;
+
+            ulong prevButtons = _previousButtonsState[targetDeviceIndex];
+            
+            bool curTrigger = (currentButtons & triggerMask) != 0;
+            bool prevTrigger = (prevButtons & triggerMask) != 0;
+            if (curTrigger && !prevTrigger) 
+            { 
+                TriggerPressed?.Invoke(); 
+                TriggerChanged?.Invoke(1f); 
+            }
+            if (!curTrigger && prevTrigger) 
+            { 
+                TriggerReleased?.Invoke(); 
+                TriggerChanged?.Invoke(0f); 
+            }
+            
+            bool curGrip = (currentButtons & gripMask) != 0;
+            bool prevGrip = (prevButtons & gripMask) != 0;
+            if (curGrip && !prevGrip) AButtonPressed?.Invoke();
+            if (!curGrip && prevGrip) AButtonReleased?.Invoke();
+            
+            bool curMenu = (currentButtons & menuMask) != 0;
+            bool prevMenu = (prevButtons & menuMask) != 0;
+            if (curMenu && !prevMenu) ThumbButtonPressed?.Invoke();
+
+            _previousButtonsState[targetDeviceIndex] = currentButtons;
         }
     }
 
@@ -145,7 +238,13 @@ public class InputReader : MonoBehaviour
         
         BindAction(_inputConfig.IsTrackedAction, ctx => 
             IsTrackedChanged?.Invoke(ctx.ReadValue<int>()));
-        
+
+        if (ConfigMode == ConfigMode.InputConfig)
+        {
+            BindAction(_inputConfig.IsTrackedAction, ctx => 
+                IsTracked?.Invoke(ctx.ReadValue<bool>())); //TO DO CAST EN BOOL
+        }
+
         BindAction(_inputConfig.PositionAction, ctx => 
             PositionChanged?.Invoke(ctx.ReadValue<Vector3>()));
         
@@ -159,6 +258,8 @@ public class InputReader : MonoBehaviour
 
     private void Unbind()
     {
+        if (_inputConfig == null) return;
+
         UnbindAction(_inputConfig.TriggerAction,
             ctx => TriggerChanged?.Invoke(ctx.ReadValue<float>()),
             ctx => TriggerChanged?.Invoke(0f));

@@ -14,5 +14,6 @@ public enum DeviceType
     NULL,
     SOFTWARE,
     CONTROLLER,
+    TRACKER,
     HEADSET
 }

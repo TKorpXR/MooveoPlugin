@@ -18,7 +18,7 @@ MonoBehaviour:
   ThumbButton: {fileID: 0}
   AButton: {fileID: 0}
   BButton: {fileID: 0}
-  PositionAction: {fileID: 7862207684358717888, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  RotationAction: {fileID: -530380113134220495, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  IsTrackedAction: {fileID: 1031966339891076899, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  PositionAction: {fileID: 7862207684358717888, guid: d348712bda248c246b8c49b3db54643f, type: 3}
+  RotationAction: {fileID: -530380113134220495, guid: d348712bda248c246b8c49b3db54643f, type: 3}
+  IsTrackedAction: {fileID: 1031966339891076899, guid: d348712bda248c246b8c49b3db54643f, type: 3}
   minTriggerValue: 0.2
