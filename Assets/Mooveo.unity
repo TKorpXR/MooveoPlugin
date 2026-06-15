@@ -428,10 +428,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d36c8108a5bd344dadbdea032368d7b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Mooveo.Runtime::UIInputToolDebugger
-  _uiDocument: {fileID: 1145164402}
+  m_EditorClassIdentifier: Assembly-CSharp::UIInputToolDebugger
+  _uiDocument: {fileID: 1157331266}
   _enabled: 0
---- !u!1 &1145164401
+--- !u!1 &1157331265
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -439,22 +439,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1145164403}
-  - component: {fileID: 1145164402}
-  m_Layer: 0
+  - component: {fileID: 1157331267}
+  - component: {fileID: 1157331266}
+  m_Layer: 5
   m_Name: GameObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1145164402
+--- !u!114 &1157331266
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1145164401}
+  m_GameObject: {fileID: 1157331265}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
@@ -471,87 +471,17 @@ MonoBehaviour:
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
---- !u!4 &1145164403
+--- !u!4 &1157331267
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1145164401}
+  m_GameObject: {fileID: 1157331265}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
   m_LocalPosition: {x: 0.04, y: 1.9, z: 1}
   m_LocalScale: {x: 0.025, y: 0.025, z: 0.025}
-  m_ConstrainProportionsScale: 1
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1197153954
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1197153956}
-  - component: {fileID: 1197153955}
-  m_Layer: 0
-  m_Name: -----------------GLOBAL SETTINGS--------------------------
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1197153955
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1197153954}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e906d23c377458c49a98598c559f1ea7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GlobalSettings.Core::GlobalSettings.Core.GlobalSettings
-  Headless:
-    _value: 1
-  LinearityThresholdEditor: 0.05
-  SymmetryThresholdEditor: 0.15
-  LinearityThreshold:
-    _value: 0.05
-  SymmetryThreshold:
-    _value: 0.05
-  DefaultExportPath:
-    _value: D:\TKorp\MooveoPlugin\Export
-  HotFolderEXEPath:
-    _value: C:/DNP/HotFolderPrint/HotFolderPrint.exe
-  SteamVREXEPath:
-    _value: C:/Program Files (x86)/Steam/steamapps/common/SteamVR/bin/win64/vrstartup.exe
-  EosUtilityEXEPath:
-    _value: C:/Program Files (x86)/Canon/EOS Utility/EOS Utility.exe
-  DeltaPrecisionCalibration:
-    _value: 0.03
-  CursorFactorScale:
-    _value: 1.5
-  DragThreshold:
-    _value: 6
-  CursorRadiusMIN:
-    _value: 0.005
-  CursorRadiusMAX:
-    _value: 0.15
---- !u!4 &1197153956
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1197153954}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -631,6 +561,71 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1769522446
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 54339437828024752, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_CurrentTrackingState
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -5.94635
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 7.73072
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 180
+      objectReference: {fileID: 0}
+    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2487081969762539691, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_CurrentTrackingState
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3675105449365014216, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
+      propertyPath: m_Name
+      value: XR Origin (XR Rig)_Mooveo
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
 --- !u!1 &1828387686
 GameObject:
   m_ObjectHideFlags: 0
@@ -679,7 +674,7 @@ MonoBehaviour:
   _testerTrackerPrefab: {fileID: 124393901766384250, guid: 97f2d813b25387645bfa3b9324698aa9, type: 3}
   _leftHandConfig: {fileID: 0}
   _rightHandConfig: {fileID: 0}
-  _sceneName: 
+  _sceneName: Scene_02_Calibration_Camera_5
   _doesLaunchPopup: {fileID: 0}
   _cursorPrefab: {fileID: 4609635392149292052, guid: f0aa8706de8a52541b48328a37eeef50, type: 3}
   _userUiCanvas: {fileID: 1875930695}
@@ -694,10 +689,15 @@ MonoBehaviour:
     Label: SteamVR
     Type: 5
     RequiresExe: 1
+  - Key: HotFolder
+    Label: HotFolder
+    Type: 7
+    RequiresExe: 1
   - Key: AnyController
     Label: AnyController
     Type: 3
     RequiresExe: 0
+  _currentState: 0
   _debugSlider: {fileID: 0}
   _debug: 0
 --- !u!1 &1873943182
@@ -775,7 +775,7 @@ MonoBehaviour:
   _zoneRadiusCm: 5
   _uiWidthPixels: 1920
   _uiPanelPPU: 100
-  _lerpSpeed: 30
+  _lerpSpeed: 15
   _reDrawThreshold: 0.0001
 --- !u!114 &1873943186
 MonoBehaviour:
@@ -788,7 +788,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 75ba9af3620c4e244986c9ca20f8d59a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Mooveo.Runtime::DebugInfoDisplay
+  m_EditorClassIdentifier: Assembly-CSharp::DebugInfoDisplay
   _updateInterval: 0.5
 --- !u!1 &1875930692
 GameObject:
@@ -892,6 +892,78 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!1 &2071903464
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2071903465}
+  - component: {fileID: 2071903466}
+  m_Layer: 0
+  m_Name: --- GLOBAL SETTINGS ---
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2071903465
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2071903464}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 2.588003, y: 0.74955016, z: -3.2966294}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2071903466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2071903464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e906d23c377458c49a98598c559f1ea7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GlobalSettings
+  Headless:
+    _value: 1
+  Admin:
+    _value: 0
+  LinearityThresholdEditor: 0.05
+  SymmetryThresholdEditor: 0.15
+  LinearityThreshold:
+    _value: 0.05
+  SymmetryThreshold:
+    _value: 0.15
+  DefaultExportPath:
+    _value: 
+  HotFolderEXEPath:
+    _value: C:/DNP/HotFolderPrint/HotFolderPrint.exe
+  SteamVREXEPath:
+    _value: C:/Program Files (x86)/Steam/steamapps/common/SteamVR/bin/win64/vrstartup.exe
+  EosUtilityEXEPath:
+    _value: C:/Program Files (x86)/Canon/EOS Utility/EOS Utility.exe
+  DeltaPrecisionCalibration:
+    _value: 0.03
+  CursorFactorScale:
+    _value: 1.4
+  DragThreshold:
+    _value: 100
+  PaintingRadiusMIN:
+    _value: 0.0025
+  PaintingRadiusMAX:
+    _value: 0.15
 --- !u!114 &3127728407676174906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1025,80 +1097,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &5323877465949907681
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 111308498578459672, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.125
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 180
-      objectReference: {fileID: 0}
-    - target: {fileID: 2128409178705555501, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2748201606631144244, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3675105449365014216, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: m_Name
-      value: XR Origin (XR Rig)_Mooveo
-      objectReference: {fileID: 0}
-    - target: {fileID: 4150124052672225012, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
-      propertyPath: _shortcuts.Array.data[0].OnTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 1828387689}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 98d513e05dd85464293321b1e2118ec9, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 5323877465949907681}
+  - {fileID: 1769522446}
   - {fileID: 3127728407676174907}
   - {fileID: 3127728408198131895}
   - {fileID: 871032576}
@@ -1106,6 +1109,6 @@ SceneRoots:
   - {fileID: 1875930696}
   - {fileID: 1459706260}
   - {fileID: 1873943184}
-  - {fileID: 1145164403}
+  - {fileID: 1157331267}
   - {fileID: 1074222893}
-  - {fileID: 1197153956}
+  - {fileID: 2071903465}

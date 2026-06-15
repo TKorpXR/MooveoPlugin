@@ -128,12 +128,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Mooveo.Runtime::ControllerShortcutHandler
   _shortcuts:
-  - Name: 
-    Button1: 0
-    Button2: 0
+  - Name: Recalibrate
+    Button1: 1
+    Button2: 4
     OnTrigger:
       m_PersistentCalls:
-        m_Calls: []
+        m_Calls:
+        - m_Target: {fileID: 8467865285465124803}
+          m_TargetAssemblyTypeName: CalibrationController, Mooveo.Runtime
+          m_MethodName: TryRecalibrate
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &8471354469724622297
 GameObject:
   m_ObjectHideFlags: 0
