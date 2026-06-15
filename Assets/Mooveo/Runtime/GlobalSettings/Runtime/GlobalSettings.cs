@@ -20,6 +20,9 @@ public class GlobalSettings: MonoBehaviour
     
     [Tooltip("Indique si le mode headless est actif (sans casque => implique de n'avoir que des Tracker)")]
     public ObservableSetting<bool> Headless = new ObservableSetting<bool>() { Value = false };
+
+    [Tooltip("Indique si le mode Admin est actif (Simulateur Souris/Clavier sans casque VR)")]
+    public ObservableSetting<bool> Admin = new ObservableSetting<bool>() { Value = false };
     
     [Tooltip(
         "Seuil de tolérance (en % de la largeur du mur) pour accepter que les points forment une ligne droite exclusive. Une valeur de 0.05 équivaut à un niveau de tolérance de 5%.")]
@@ -54,8 +57,8 @@ public class GlobalSettings: MonoBehaviour
     [Tooltip("Seuil a depassé pour considérer que le cursor est en mode 'dragging'")]
     public ObservableSetting<float> DragThreshold = new ObservableSetting<float>() { Value = 6f };
     
-    public ObservableSetting<float> CursorRadiusMIN = new ObservableSetting<float>() { Value = 0.005f };
-    public ObservableSetting<float> CursorRadiusMAX = new ObservableSetting<float>() { Value = 0.15f };
+    public ObservableSetting<float> PaintingRadiusMIN = new ObservableSetting<float>() { Value = 0.0025f };
+    public ObservableSetting<float> PaintingRadiusMAX = new ObservableSetting<float>() { Value = 0.15f };
     
     protected string SettingsInternalPath => Path.Combine(Application.persistentDataPath, "global_settings.json");
     protected string SettingsExternalPath => Path.Combine(Application.streamingAssetsPath, "global_settings.json");
@@ -96,6 +99,7 @@ public class GlobalSettings: MonoBehaviour
     protected void OnValidate()
     {
         Headless.ForceNotify();
+        Admin.ForceNotify();
         DefaultExportPath.ForceNotify();
         HotFolderEXEPath.ForceNotify();
         SteamVREXEPath.ForceNotify();
@@ -103,8 +107,8 @@ public class GlobalSettings: MonoBehaviour
         DeltaPrecisionCalibration.ForceNotify();
         CursorFactorScale.ForceNotify();
         DragThreshold.ForceNotify();
-        CursorRadiusMIN.ForceNotify();
-        CursorRadiusMAX.ForceNotify();
+        PaintingRadiusMIN.ForceNotify();
+        PaintingRadiusMAX.ForceNotify();
     }
     #endif
 

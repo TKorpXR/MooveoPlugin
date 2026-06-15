@@ -53,12 +53,14 @@ public class CalibrationManager : MonoBehaviour
     [SerializeField] protected float _deltaPrecisionDistance;
     [SerializeField] private float _deltaPointsVerification = 0.025f;
     [SerializeField] private Transform _transformTestReference;
+    public Transform TransformTestReference => _transformTestReference;
     [SerializeField] Camera _camera;
     
     [Header("Device Checking Settings")]
     [SerializeField] private List<DeviceCheckerConfig> _devicesToCheck = new List<DeviceCheckerConfig>();
     private Dictionary<DeviceCheckerConfig, IDeviceChecker> _activeCheckers = new Dictionary<DeviceCheckerConfig, IDeviceChecker>();
     private Dictionary<UnityEngine.InputSystem.InputDevice, CalibrationController> _activeTesters = new Dictionary<UnityEngine.InputSystem.InputDevice, CalibrationController>();
+    private CalibrationController _adminTester;
 
     public event Action<List<DeviceCheckerConfig>> OnInitDevicesUI;
     public event Action<string, string, bool, string> OnUpdateDeviceUI; 
@@ -73,6 +75,9 @@ public class CalibrationManager : MonoBehaviour
     private Coroutine _startOverCalibrationCooldown;
     private Coroutine _checkDevicesRoutine; // Ajout pour gérer la boucle proprement
     private Transform _player;
+    public enum EState { None, FirstCalibration, RefineCalibration }
+    public EState _currentState = EState.None;
+
     private int _nPointsToCalibrate = 3;
     private Dictionary<CalibrationController, CalibrationCursorUI> _testercursors = new Dictionary<CalibrationController, CalibrationCursorUI>();
     
@@ -90,7 +95,7 @@ public class CalibrationManager : MonoBehaviour
     private bool _ignoreConfig = false;
 
     public event Action OnClickForCalibrating;
-    public event Action OnErrorDuringCalibration;
+    public event Action<string> OnErrorDuringCalibration;
     public event Action OnSubmitPoint;
     public event Action<float> OnUpdatePoint;
     public event Action OnCalibrationEnded;
@@ -290,6 +295,29 @@ public class CalibrationManager : MonoBehaviour
         Init();
     }
 
+    private void Update()
+    {
+        if (_currentState == EState.FirstCalibration || _currentState == EState.RefineCalibration)
+        {
+            if (_devicesChecked && !AreControllersConnected())
+            {
+                _devicesChecked = false; // Empêche le spam de l'Update
+                if (_averagePosRoutine != null)
+                {
+                    StopCoroutine(_averagePosRoutine);
+                    _averagePosRoutine = null;
+                }
+
+                if (UICalibrationToolkit.instance != null)
+                {
+                    UICalibrationToolkit.instance.ShowPopupError("Le tracker a été perdu ou masqué. Reprise du scan dans 5 secondes...");
+                }
+                
+                StartCoroutine(HandleTrackingLossRoutine());
+            }
+        }
+    }
+
     private Action<bool> _launchAction;
 
     public virtual void Init()
@@ -303,6 +331,11 @@ public class CalibrationManager : MonoBehaviour
         _checkDevicesRoutine = StartCoroutine(CheckDevicesLogicLoop());
         
         _config = MooveoConfigManager.Load();
+
+        if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
+        {
+            SpawnAdminTester();
+        }
     }
     
     public void OpenPopupLaunching()
@@ -342,12 +375,14 @@ public class CalibrationManager : MonoBehaviour
         }
         else
         {
+            _currentState = (_nPointsToCalibrate == 3) ? EState.FirstCalibration : EState.RefineCalibration;
             UICalibrationToolkit.instance.StartMainFlow(_nPointsToCalibrate);
         }
     }
     
     public bool AreControllersConnected()
     {
+        if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value) return true;
         bool leftConnected = false;
         bool rightConnected = false;
         bool trackerConnected = false;
@@ -406,10 +441,21 @@ public class CalibrationManager : MonoBehaviour
 
         return false;
     }
+    private HashSet<string> _reportedMissingFiles = new HashSet<string>();
     
     private IEnumerator CheckDevicesLogicLoop()
     {
+        if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
+        {
+            foreach (var kvp in _activeCheckers) OnUpdateDeviceUI?.Invoke(kvp.Key.Key, kvp.Key.Label, true, "");
+            yield return new WaitForSeconds(0.5f);
+            _devicesChecked = true;
+            OnAllDevicesReady?.Invoke();
+            yield break;
+        }
+
         bool allDevicesValid = false;
+        _reportedMissingFiles.Clear();
 
         while (!allDevicesValid)
         {
@@ -426,9 +472,34 @@ public class CalibrationManager : MonoBehaviour
                 if (!isConnected && config.RequiresExe)
                 {
                     exePath = GetExePathForType(config.Type);
-                    if (!string.IsNullOrEmpty(exePath) && !AppLauncher.IsProcessLaunched(exePath))
+                    if (!string.IsNullOrEmpty(exePath))
                     {
-                        AppLauncher.LaunchProcess(exePath);
+                        if (System.IO.File.Exists(exePath))
+                        {
+                            if (!AppLauncher.IsProcessLaunched(exePath))
+                            {
+                                AppLauncher.LaunchProcess(exePath);
+                            }
+                        }
+                        else
+                        {
+                            if (!_reportedMissingFiles.Contains(exePath))
+                            {
+                                _reportedMissingFiles.Add(exePath);
+                                string varName = config.Type switch {
+                                    EDeviceCheckerType.SteamVR => "SteamVREXEPath",
+                                    EDeviceCheckerType.EosUtility => "EosUtilityEXEPath",
+                                    EDeviceCheckerType.HotFolder => "HotFolderEXEPath",
+                                    _ => "chemin"
+                                };
+                                
+                                if (UICalibrationToolkit.instance != null && UICalibrationToolkit.instance.RootOverlay != null)
+                                {
+                                    var root = UICalibrationToolkit.instance.RootOverlay;
+                                    UIToast.Show(root, "Erreur d'exécutable", $"Le fichier exécutable pour '{config.Label}' est introuvable:\n{exePath}\n\nVeuillez vérifier la variable '{varName}' dans GlobalSettings.", false, 8000f);
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -496,6 +567,10 @@ public class CalibrationManager : MonoBehaviour
         _ignoreConfig = true; // S'assurer de forcer la calibration ici aussi
         ClearTestCalibration(true);
         _nPointsToCalibrate = 9;
+        _currentState = EState.RefineCalibration;
+        
+        if (UICalibrationToolkit.instance != null)
+            UICalibrationToolkit.instance.ResetUI();
         
         ScanAndSpawnTesters();
 
@@ -506,6 +581,9 @@ public class CalibrationManager : MonoBehaviour
     public void HandleClick(Transform _controllerTransform)
     {
         if (!_devicesChecked || !_needCalibration) return;
+        
+        // CORRECTION : On bloque la capture de point si on est encore dans les menus d'attente
+        if (_currentState == EState.None) return;
         
         if (_averagePosRoutine != null)
         {
@@ -655,23 +733,36 @@ public class CalibrationManager : MonoBehaviour
         Vector3 averageForward = Vector3.zero;
         
         if(_debugSlider != null) _debugSlider.value = 0;
-        float distance = 0f;
+        float slowDistance = 0f;
+        float frameDistance = 0f;
+        Vector3 initialPos = controllerTransform.position;
         Vector3 previousPos = controllerTransform.position;
         
         while (elapsedTime < _posAnalysisTime)
         {
-            distance = Vector3.Distance(previousPos, controllerTransform.position);
-            if (averagePosition != Vector3.zero &&  distance> _deltaPrecisionDistance)
+            slowDistance = Vector3.Distance(initialPos, controllerTransform.position);
+            frameDistance = Vector3.Distance(previousPos, controllerTransform.position);
+
+            if (frameDistance > 0.10f)
             {
-                if (_debug) Debug.Log($"ERROR DIST: distance {distance} limit {_deltaPrecisionDistance}");
-                OnErrorDuringCalibration?.Invoke();
+                if (_debug) Debug.Log($"GLITCH DIST: distance {frameDistance} limit 0.10f");
+                OnErrorDuringCalibration?.Invoke("Erreur de tracking. Assurez-vous de ne pas masquer le capteur.");
                 yield break;
             }
+
+            if (averagePosition != Vector3.zero && slowDistance > _deltaPrecisionDistance)
+            {
+                if (_debug) Debug.Log($"ERROR DIST: distance {slowDistance} limit {_deltaPrecisionDistance}");
+                OnErrorDuringCalibration?.Invoke("Mouvement détecté. Maintenez le contrôleur parfaitement immobile.");
+                yield break;
+            }
+            
             OnUpdatePoint?.Invoke(elapsedTime / _posAnalysisTime);
             elapsedTime += Time.deltaTime;
             averagePosition += controllerTransform.position;
-            averageForward += controllerTransform.forward;
+            averageForward += controllerTransform.up;
             counter++;
+            previousPos = controllerTransform.position;
             if(_debugSlider != null) _debugSlider.value = elapsedTime / _posAnalysisTime;
             yield return null;
         }
@@ -703,48 +794,72 @@ public class CalibrationManager : MonoBehaviour
             yield break;
         }
 
-        Vector3 p1 = _points[0];
-        Vector3 p2 = _points[1];
-        Vector3 p3 = _points[2];
+        Vector3 p1, p2, p3;
+        List<Vector3> normalsToTest;
+
+        // Si on est en Refine (9 points), on groupe par colonnes (Gauche, Centre, Droite) 
+        // pour créer un axe horizontal parfait à partir des 3 lignes scannées.
+        if (_currentState == EState.RefineCalibration && _points.Count >= 9)
+        {
+            p1 = (_points[0] + _points[3] + _points[6]) / 3f; // Moyenne Colonne Gauche
+            p2 = (_points[1] + _points[4] + _points[7]) / 3f; // Moyenne Colonne Centre
+            p3 = (_points[2] + _points[5] + _points[8]) / 3f; // Moyenne Colonne Droite
+
+            Vector3 n1 = (_normals[0] + _normals[3] + _normals[6]).normalized;
+            Vector3 n2 = (_normals[1] + _normals[4] + _normals[7]).normalized;
+            Vector3 n3 = (_normals[2] + _normals[5] + _normals[8]).normalized;
+            normalsToTest = new List<Vector3> { n1, n2, n3 };
+        }
+        else // Cas standard (FirstCalibration à 3 points)
+        {
+            p1 = _points[0];
+            p2 = _points[1];
+            p3 = _points[2];
+            normalsToTest = _normals;
+        }
+
         float totalWidth = Vector3.Distance(p1, p3);
 
         // a) Vérification de l'alignement
-        if (UICalibrationManager.instance != null) UICalibrationManager.instance.SetValidationUI(true, "Vérification de l'alignement en cours...");
-        else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.SetValidationUI(true, "Vérification de l'alignement en cours...");
+        if (UICalibrationManager.instance != null) UICalibrationManager.instance.SetValidationUI(true, "Vérification en cours...");
+        else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.SetValidationUI(true, "Vérification en cours...");
         yield return new WaitForSeconds(1.5f);
 
-        if (!CalibrationValidator.CheckLinearity(p1, p2, p3, totalWidth, GlobalSettings.Core.GlobalSettings.Instance.LinearityThreshold.Value))
+        var lin = CalibrationValidator.CheckLinearity(p1, p2, p3, totalWidth, GlobalSettings.Core.GlobalSettings.Instance.LinearityThreshold.Value);
+        if (!lin.isValid)
         {
-            if (UICalibrationManager.instance != null) UICalibrationManager.instance.MarkAllPointsError("Echec de la calibration : Points non alignés");
-            else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.MarkAllPointsError("Echec de la calibration : Points non alignés");
+            if (UICalibrationManager.instance != null) UICalibrationManager.instance.MarkAllPointsError(lin.errorMessage);
+            else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.MarkAllPointsError(lin.errorMessage);
             
             yield return HandleCalibrationErrorRoutine();
             yield break;
         }
 
         // c) Analyse de la symétrie
-        if (UICalibrationManager.instance != null) UICalibrationManager.instance.SetValidationUI(true, "Analyse de la symétrie en cours...");
-        else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.SetValidationUI(true, "Analyse de la symétrie en cours...");
+        if (UICalibrationManager.instance != null) UICalibrationManager.instance.SetValidationUI(true, "Vérification en cours...");
+        else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.SetValidationUI(true, "Vérification en cours...");
         yield return new WaitForSeconds(1.5f);
 
-        if (!CalibrationValidator.CheckSymmetry(p1, p2, p3, totalWidth, GlobalSettings.Core.GlobalSettings.Instance.SymmetryThreshold.Value))
+        var sym = CalibrationValidator.CheckSymmetry(p1, p2, p3, totalWidth, GlobalSettings.Core.GlobalSettings.Instance.SymmetryThreshold.Value);
+        if (!sym.isValid)
         {
-            if (UICalibrationManager.instance != null) UICalibrationManager.instance.MarkAllPointsError("Echec de la calibration : Asymétrie détectée");
-            else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.MarkAllPointsError("Echec de la calibration : Asymétrie détectée");
+            if (UICalibrationManager.instance != null) UICalibrationManager.instance.MarkAllPointsError(sym.errorMessage);
+            else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.MarkAllPointsError(sym.errorMessage);
             
             yield return HandleCalibrationErrorRoutine();
             yield break;
         }
 
         // e) Vérification des capteurs
-        if (UICalibrationManager.instance != null) UICalibrationManager.instance.SetValidationUI(true, "Vérification des capteurs en cours...");
-        else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.SetValidationUI(true, "Vérification des capteurs en cours...");
+        if (UICalibrationManager.instance != null) UICalibrationManager.instance.SetValidationUI(true, "Vérification en cours...");
+        else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.SetValidationUI(true, "Vérification en cours...");
         yield return new WaitForSeconds(1.5f);
 
-        if (!CalibrationValidator.AreNormalsConsistent(_normals))
+        var norm = CalibrationValidator.AreNormalsConsistent(normalsToTest);
+        if (!norm.isValid)
         {
-            if (UICalibrationManager.instance != null) UICalibrationManager.instance.MarkAllPointsError("Echec de la calibration : Capteurs mal orientés");
-            else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.MarkAllPointsError("Echec de la calibration : Capteurs mal orientés");
+            if (UICalibrationManager.instance != null) UICalibrationManager.instance.MarkAllPointsError(norm.errorMessage);
+            else if (UICalibrationToolkit.instance != null) UICalibrationToolkit.instance.MarkAllPointsError(norm.errorMessage);
             
             yield return HandleCalibrationErrorRoutine();
             yield break;
@@ -784,6 +899,14 @@ public class CalibrationManager : MonoBehaviour
         Init();
     }
 
+    private IEnumerator HandleTrackingLossRoutine()
+    {
+        yield return new WaitForSeconds(4.5f);
+        ClearTestCalibration(true);
+        ScanAndSpawnTesters();
+        Init();
+    }
+
     IEnumerator StartOverCalibrationCooldown()
     {
         yield return new WaitForSeconds(0.5f);
@@ -797,8 +920,15 @@ public class CalibrationManager : MonoBehaviour
 
     private bool CalibrationEnded()
     {
-        _needCalibration = !(_points.Count >= _nPointsToCalibrate);
-        return !_needCalibration;
+        bool isDone = _points.Count == _nPointsToCalibrate;
+
+        if (isDone && UICalibrationToolkit.instance != null)
+        {
+            UICalibrationToolkit.instance.ShowPressAInstruction();
+        }
+
+        _needCalibration = !isDone;
+        return isDone;
     }
 
     private void ClearTestCalibration(bool needCalibration)
@@ -806,6 +936,9 @@ public class CalibrationManager : MonoBehaviour
         _devicesChecked = false;
         _needCalibration = needCalibration;
         _handleClick = false;
+        
+        // CORRECTION : Réinitialisation de l'état de calibration
+        _currentState = EState.None; 
         
         _points.Clear();
         _normals.Clear();
@@ -816,6 +949,25 @@ public class CalibrationManager : MonoBehaviour
                 Destroy(tester.gameObject);
         }
         _activeTesters.Clear();
+
+        if (_adminTester != null)
+        {
+            if (_adminTester.gameObject != null)
+                Destroy(_adminTester.gameObject);
+            _adminTester = null;
+        }
+    }
+
+    private void SpawnAdminTester()
+    {
+        GameObject instance = Instantiate(_testerPrefab);
+        instance.name = "Tester_Admin_FakeController";
+        
+        var driver = instance.GetComponent<UnityEngine.InputSystem.XR.TrackedPoseDriver>();
+        if (driver != null) driver.enabled = false; // Désactive la recherche de matériel VR
+        
+        _adminTester = instance.GetComponent<CalibrationController>();
+        _adminTester.SetupForTest(_camera, Vector3.zero);
     }
     
     private Vector3 CalculateCenter(List<Vector3> points, out int centerIndex)

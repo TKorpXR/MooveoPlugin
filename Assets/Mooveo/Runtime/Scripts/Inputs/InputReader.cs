@@ -39,7 +39,7 @@ public class InputReader : MonoBehaviour
 
     private readonly ulong triggerMask = 1ul << (int)EVRButtonId.k_EButton_SteamVR_Trigger; // Pin 4
     private readonly ulong gripMask    = 1ul << (int)EVRButtonId.k_EButton_Grip;            // Pin 3
-    private readonly ulong menuMask    = 1ul << (int)EVRButtonId.k_EButton_ApplicationMenu; // Pin 2
+    private readonly ulong menuMask    = 1ul << (int)EVRButtonId.k_EButton_SteamVR_Touchpad; // 4294967296
     
     private TrackedDevicePose_t[] _poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
     
@@ -79,6 +79,10 @@ public class InputReader : MonoBehaviour
 
     private void InitializeInput()
     {
+        if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
+        {
+            SimulateVR = true;
+        }
         //if (_inputConfig == null && !GlobalSettings.Core.GlobalSettings.Instance.VR.Value) _inputConfig = GlobalSettings.Core.GlobalSettings.Instance.DebugConfig;
         if (_inputConfig != null) Bind();
     }
@@ -96,6 +100,11 @@ public class InputReader : MonoBehaviour
     
     private void Update()
     {
+        if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
+        {
+            SimulateVR = true;
+        }
+
         if (SimulateVR)
         {
             HandleSimulation();

@@ -10,16 +10,24 @@ public class CalibrationController : DefaultController
     private Vector3 _canvasPosition;
     private float _simulatePaintDecalRadius;
     private float _simulatedPaintDepth;
+    private Transform _wallTransform;
+    
+    public event Action<bool> OnLockRotationChanged;
+    public event Action<bool> OnLockSizeChanged;
     
 //#if UNITY_EDITOR
     private bool _wasSimulateTrigger = false;
 //#endif
 
+    private bool _lockRotation = false;
+    private bool _locksize = false;
+    private float _lastScale = 0.0f;
+
 
     private void Start()
     {
-        GlobalSettings.Core.GlobalSettings.Instance.CursorRadiusMIN.Bind(() => _factorRadiusMIN, value => _factorRadiusMIN = value);
-        GlobalSettings.Core.GlobalSettings.Instance.CursorRadiusMAX.Bind(() => _factorRadiusMAX, value => _factorRadiusMAX = value);
+        GlobalSettings.Core.GlobalSettings.Instance.PaintingRadiusMIN.Bind(() => _factorRadiusMIN, value => _factorRadiusMIN = value);
+        GlobalSettings.Core.GlobalSettings.Instance.PaintingRadiusMAX.Bind(() => _factorRadiusMAX, value => _factorRadiusMAX = value);
 
     }
 
@@ -42,11 +50,39 @@ public class CalibrationController : DefaultController
         }
 //#endif
         
-        if (_cam == null) return;
-        _simulatedPaintDepth = Vector3.Distance(transform.position, _canvasPosition); // TODO FAIRE EN SORTE QUE LA DEPTH NE DEPENDE PAS DU CENTRE MAIS DE TOUTE LA SURFACE
-        _simulatePaintDecalRadius = Mathf.Lerp(_factorRadiusMIN, _factorRadiusMAX, Mathf.Clamp01(_simulatedPaintDepth));
-        if(_cursor != null) 
-            _cursor.UpdateCursor(transform, _cam, _simulatePaintDecalRadius);
+        if (_wallTransform == null)
+        {
+            if (CalibrationManager.instance != null)
+                _wallTransform = CalibrationManager.instance.TransformTestReference;
+
+            if (_wallTransform == null) return;
+        }
+        
+        Plane wallPlane = new Plane(-_wallTransform.forward, _wallTransform.position);
+        //Vector3 rayDirection = _lockRotation ? _wallTransform.forward : transform.forward;
+        Vector3 rayDirection = _lockRotation ? _wallTransform.forward : transform.forward;
+        Ray ray = new Ray(transform.position, rayDirection);
+        
+        if (wallPlane.Raycast(ray, out float distance))
+        {
+            Vector3 hitPoint = ray.GetPoint(distance);
+            _simulatedPaintDepth = distance;
+            
+            _simulatePaintDecalRadius = Mathf.Lerp(_factorRadiusMIN, _factorRadiusMAX, Mathf.Clamp01(_simulatedPaintDepth));
+            
+            if (_cursor != null)
+            {
+                _cursor.UpdateCursor(hitPoint, _locksize ? _lastScale : _simulatePaintDecalRadius);
+                _cursor.SetVisibility(true);
+            }
+        }
+        else
+        {
+            if (_cursor != null)
+            {
+                _cursor.SetVisibility(false);
+            }
+        }
 
     }
 
@@ -66,17 +102,26 @@ public class CalibrationController : DefaultController
         }
     }
 
-    public override void HandleTriggerPressed( )
+    public override void HandleTriggerPressed()
     {
         base.HandleTriggerPressed();
-        CalibrationManager.instance.HandleClick(transform);
+        CalibrationManager.instance.HandleClick(transform); // Capture de point
+        CalibrationManager.instance.NotifyUIClickOnce(this); // Navigation UI
     }
 
     [ContextMenu("HandleAPressed")]
     public override void HandleAPressed()
     {
         base.HandleAPressed();
-        CalibrationManager.instance.NotifyUIClickOnce(this);
+        _locksize = !_locksize;
+        OnLockSizeChanged?.Invoke(_locksize);
+        _lastScale = _simulatePaintDecalRadius;
+    }
+
+    public void TryRecalibrate()
+    {
+        Debug.Log($"[CalibrationController] TryRecalibrate");
+        CalibrationManager.instance.StartOverCalibration();
     }
 
     public override void HandleAReleased()
@@ -98,6 +143,8 @@ public class CalibrationController : DefaultController
     {
         base.HandleThumb();
         CalibrationManager.instance.HandleThumbClick();
+        _lockRotation = !_lockRotation;
+        OnLockRotationChanged?.Invoke(_lockRotation);
     }
 
     public void SetupForTest(Camera cam, Vector3 canvasPosition)
@@ -106,7 +153,7 @@ public class CalibrationController : DefaultController
         _canvasPosition = canvasPosition;
         CalibrationManager.instance.AddNewTester(this);
         _cursor = CalibrationManager.instance.GetAssociatedCursor(this);
-        _cursor.Init();
+        _cursor.Init(this);
     }
 
     private void OnDestroy()

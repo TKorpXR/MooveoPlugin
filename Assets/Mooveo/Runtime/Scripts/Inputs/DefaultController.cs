@@ -13,7 +13,7 @@ public class DefaultController : MonoBehaviour
     [SerializeField] protected TrackedPoseDriver _poseDriver;
     [SerializeField] private InputReader _reader;
     [SerializeField] protected ControllerShortcutHandler _shortcutHandler;
-    [SerializeField] private bool _debug = false;
+    [SerializeField] protected bool _debug = false;
 
     public bool IsTracked = false;
 
@@ -65,6 +65,11 @@ public class DefaultController : MonoBehaviour
         if (_debug) Debug.Log($"[{nameof(DefaultController)}] HandleTriggerPressed called");
     }
 
+    public virtual void HandleTriggerReleased( )
+    {
+        if (_debug) Debug.Log($"[{nameof(DefaultController)}] HandleTriggerReleased called");
+    }
+
     public virtual void HandleAPressed()
     {
         if (_debug) Debug.Log($"[{nameof(DefaultController)}] HandleAPressed called");
@@ -104,6 +109,7 @@ public class DefaultController : MonoBehaviour
         
         _reader.TriggerChanged += HandleTrigger;
         _reader.TriggerPressed += HandleTriggerPressed;
+        _reader.TriggerReleased += HandleTriggerReleased;
 
         _reader.AButtonPressed += HandleAPressed;
         _reader.AButtonReleased += HandleAReleased;
@@ -126,6 +132,7 @@ public class DefaultController : MonoBehaviour
 
         _reader.TriggerChanged -= HandleTrigger;
         _reader.TriggerPressed -= HandleTriggerPressed;
+        _reader.TriggerReleased -= HandleTriggerReleased;
 
         _reader.AButtonPressed -= HandleAPressed;
         _reader.AButtonReleased -= HandleAReleased;

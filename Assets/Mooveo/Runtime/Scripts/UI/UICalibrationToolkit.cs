@@ -30,6 +30,7 @@ public class UICalibrationToolkit : MonoBehaviour
     
     public event Action<bool> OnDevicesChecked;
     
+    public VisualElement RootOverlay => _rootOverlay;
     private VisualElement _rootOverlay;
     private VisualElement _rootWorld;
     
@@ -437,27 +438,12 @@ public class UICalibrationToolkit : MonoBehaviour
             
             while (!_exitCalibration)
             {
-                if (!AllDevicesStillValid()) 
-                {
-                    //Debug.LogWarning("Disconnected -> Back to checking");
-                    _allDevicesValid = false;
-                    
-                    UnsubscribeFromCalibrationEvents();
-                    CalibrationManager.instance.OnCalibrationEnded -= OnCalibrationFinished;
-                    
-                    StartCheckingDevices();
-                    yield break;
-                }
-        
                 yield return new WaitForSeconds(0.1f);
             }
             
             //Debug.Log("CalibrationLoop -> 3 points acquired.");
             UnsubscribeFromCalibrationEvents();
             CalibrationManager.instance.OnCalibrationEnded -= OnCalibrationFinished;
-            
-            var lblInstruction = _pnlCalibrationOverlay.Q<Label>("lbl-instruction");
-            if(lblInstruction != null) lblInstruction.text = "Calibration Done. Press 'A' to verify.";
             
             yield return StartCoroutine(WaitForControllerClick());
             
@@ -530,7 +516,7 @@ public class UICalibrationToolkit : MonoBehaviour
 
             _targetProgress = value;
         }
-        private void OnPointError()
+        private void OnPointError(string errorMessage)
         {
             if (_currentIndexPoint < 0 || _currentIndexPoint >= _markElements.Count) return;
     
@@ -546,6 +532,8 @@ public class UICalibrationToolkit : MonoBehaviour
             _currentProgress = 0f;
         
             mark.Q<VisualElement>(className: "calibration-point-fill")?.MarkDirtyRepaint();
+            
+            ShowPopupError(errorMessage);
         }
     #endregion
 
@@ -678,6 +666,56 @@ public class UICalibrationToolkit : MonoBehaviour
             if (_loadingSpinner != null) _loadingSpinner.style.display = DisplayStyle.None; // Cache le spinner pour laisser seule l'erreur visible
         }
 
+        public void ShowPopupError(string errorMessage)
+        {
+            var lblInstruction = _pnlCalibrationOverlay?.Q<Label>("lbl-instruction");
+            if(lblInstruction != null) lblInstruction.text = errorMessage;
+            
+            SetValidationUI(true, errorMessage);
+            if (_loadingSpinner != null) _loadingSpinner.style.display = DisplayStyle.None;
+            
+            StartCoroutine(ClearErrorRoutine());
+        }
+
+        private IEnumerator ClearErrorRoutine()
+        {
+            yield return new WaitForSeconds(3f);
+            SetValidationUI(false);
+            var lblInstruction = _pnlCalibrationOverlay?.Q<Label>("lbl-instruction");
+            if(lblInstruction != null) lblInstruction.text = "";
+        }
+
+        public void ShowPressAInstruction(string text = "Appuyer sur la gâchette pour valider")
+        {
+            var lblInstruction = _pnlCalibrationOverlay?.Q<Label>("lbl-instruction");
+            if(lblInstruction != null) lblInstruction.text = text;
+        }
+
+        public void ResetUI()
+        {
+            foreach (var mark in _markElements)
+            {
+                mark.RemoveFromClassList("valid");
+                mark.RemoveFromClassList("error");
+                
+                var icon = mark.Q<VisualElement>(className: "calibration-point-icon");
+                if (icon != null) icon.style.opacity = 0; 
+                
+                var fill = mark.Q<VisualElement>(className: "calibration-point-fill");
+                if (fill != null) fill.MarkDirtyRepaint();
+                
+                mark.visible = false;
+            }
+            
+            var lblInstruction = _pnlCalibrationOverlay?.Q<Label>("lbl-instruction");
+            if (lblInstruction != null) lblInstruction.text = "";
+            
+            _targetProgress = 0f;
+            _displayedProgress = 0f;
+            _currentProgress = 0f;
+            _currentIndexPoint = -1;
+        }
+
         private void SetCursorsInteractivity(bool isInteractive)
     {
         foreach(var cursor in _cursors)
@@ -805,6 +843,7 @@ public class UICalibrationToolkit : MonoBehaviour
         var lblPressA = _rootOverlay.Q<Label>("lbl-press-a");
         if (lblPressA != null) 
         {
+            lblPressA.text = "Appuyer sur la gâchette pour commencer";
             lblPressA.visible = true;
             lblPressA.style.opacity = 1f;
             StartCoroutine(BlinkText(lblPressA));

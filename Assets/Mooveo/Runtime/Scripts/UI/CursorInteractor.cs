@@ -4,6 +4,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
+using UnityEngine.InputSystem;
 
 public enum UIInteractionMode
 {
@@ -14,6 +15,7 @@ public class CursorInteractor : MonoBehaviour
 {
     [SerializeField] private UIInteractionMode _interactionMode = UIInteractionMode.PhysicsRaycast3D;
     [SerializeField] private bool _debug = false;
+    [SerializeField] private LayerMask _interactableLayerMask;
 
     private Camera _camera;
     private PointerEventData _pointer;
@@ -25,22 +27,44 @@ public class CursorInteractor : MonoBehaviour
 
     bool _isClicking = false;
     bool _clicked = false;
+    private bool _isDragging = false;
 
     private Vector2 _pressStartScreenPos;
     private Vector2 _lastScreenPos;
     public event Action OnClickedOutside;
     public event Action<bool> OnClick;
 
-    // UI Toolkit Cache
-    private VisualElement _currentVisualElement;
+    public int PlayerID { get; set; } = -1;
+    public event Action<bool> OnHoverUIChanged;
+    private bool _isHoveringUI;
+    public bool IsHoveringUI
+    {
+        get => _isHoveringUI;
+        private set
+        {
+            if (_isHoveringUI != value)
+            {
+                _isHoveringUI = value;
+                if (_debug) Debug.Log($"<color=orange>[CursorInteractor]</color> IsHoveringUI changed to: {_isHoveringUI} (PlayerID: {PlayerID})");
+                OnHoverUIChanged?.Invoke(_isHoveringUI);
+            }
+        }
+    } private VisualElement _currentVisualElement;
     private VisualElement _pressedVisualElement;
 
-    public void Init()
+    public void SetLayerMask(LayerMask mask)
+    {
+        _interactableLayerMask = mask;
+    }
+
+    public void Init(bool isMooveo)
     {
         _camera = GlobalSettings.Core.GlobalSettings.MainCamera;
-        GlobalSettings.Core.GlobalSettings.Instance.DragThreshold.Bind(() => _dragThreshold, value => _dragThreshold = value);
+        if (isMooveo)
+            _dragThreshold = 600f;
+        else    
+            GlobalSettings.Core.GlobalSettings.Instance.DragThreshold.Bind(() => _dragThreshold, value => _dragThreshold = value);
         _pointer = new PointerEventData(EventSystem.current);
-        this.enabled = false;
     }
 
     private Vector2 _alignedPointerPos;
@@ -49,7 +73,15 @@ public class CursorInteractor : MonoBehaviour
     {
         if (_camera == null || EventSystem.current == null) return;
         
-        Vector2 screenPos = _camera.WorldToScreenPoint(transform.position);
+        Vector2 screenPos;
+        if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value && Mouse.current != null)
+        {
+            screenPos = Mouse.current.position.ReadValue();
+        }
+        else
+        {
+            screenPos = _camera.WorldToScreenPoint(transform.position);
+        }
 
         _lastScreenPos = screenPos;
         
@@ -62,14 +94,15 @@ public class CursorInteractor : MonoBehaviour
         if (_interactionMode == UIInteractionMode.PhysicsRaycast3D)
         {
             Ray ray = _camera.ScreenPointToRay(screenPos);
-            // EXPLICITLY target Layer 5 (UI)
-            int mask = 1 << 5;
+            // EXPLICITLY target Layer 5 (UI) or the defined interactable mask
+            int mask = _interactableLayerMask.value != 0 ? _interactableLayerMask.value : (1 << 5);
             if (Physics.Raycast(ray, out RaycastHit hit, 1000f, mask, QueryTriggerInteraction.Collide)) 
             {
                 var physicsUIDoc = hit.collider.GetComponentInParent<UIDocument>();
+                if (_debug) Debug.Log($"<color=magenta>[CursorInteractor]</color> Raycast hit object: {hit.collider.name} on Layer {hit.collider.gameObject.layer}. Has UIDocument: {physicsUIDoc != null}");
+                
                 if (physicsUIDoc != null)
                 {
-                    //Debug.Log($"<color=magenta>[INTERACTION]</color> Physics Raycast FOUND UIDocument: {hit.collider.name} | Distance: {hit.distance}");
                     hitUIToolkit = true;
                     newTarget = hit.collider.gameObject; 
                     
@@ -87,18 +120,22 @@ public class CursorInteractor : MonoBehaviour
             _pointer.scrollDelta = Vector2.zero;
             _pointer.useDragThreshold = true;
             EventSystem.current.RaycastAll(_pointer, _results);
+            if (_interactableLayerMask.value != 0)
+            {
+                _results.RemoveAll(r => r.gameObject != null && ((1 << r.gameObject.layer) & _interactableLayerMask.value) == 0);
+            }
             firstResult = _results.Count > 0 ? _results[0] : default;
             newTarget = firstResult.gameObject;
             // 1. Try Event System Result
             if (newTarget != null && newTarget.TryGetComponent<UIDocument>(out var uiDoc))
             {
-                //Debug.Log($"<color=cyan>[INTERACTION]</color> EventSystem Hit UIDocument: {newTarget.name}");
+                if (_debug) Debug.Log($"<color=cyan>[INTERACTION]</color> EventSystem Hit UIDocument: {newTarget.name}");
                 hitUIToolkit = true;
                 HandleUIToolkitInteraction(uiDoc, screenPos);
             }
             else if (newTarget != null)
             {
-                // Debug.Log("EventSystem Hit Other: " + newTarget.name);
+                if (_debug) Debug.Log("EventSystem Hit Other: " + newTarget.name);
             }
         }
         
@@ -110,6 +147,7 @@ public class CursorInteractor : MonoBehaviour
             {
                  UsingUIToolkitPointerEvent(PointerLeaveEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
                  _currentVisualElement = null;
+                 IsHoveringUI = false;
             }
             
             // Handle Dragging OUTSIDE bounds
@@ -119,9 +157,11 @@ public class CursorInteractor : MonoBehaviour
                 // We must continue supplying coordinates relative to the PRESSED element's panel.
                 _alignedPointerPos = RuntimePanelUtils.ScreenToPanel(_pressedVisualElement.panel, screenPos);
             }
+            
+            if (!_isClicking) return; // Early Exit
         }
         
-        // --- STANDARD UGUI LOGIC ---
+        // --- STANDARD UGUI & UI TOOLKIT WAKEUP LOGIC ---
         if (newTarget != _currentTarget)
         {
             if (_currentTarget != null)
@@ -141,6 +181,7 @@ public class CursorInteractor : MonoBehaviour
                 {
                     if (_currentVisualElement != null)
                     {
+                        _isDragging = false;
                         _pressedVisualElement = _currentVisualElement;
                         _pressStartScreenPos = screenPos;
                         UsingUIToolkitPointerEvent(PointerDownEvent.GetPooled(), _pressedVisualElement, _alignedPointerPos, _pointer.delta);
@@ -184,6 +225,17 @@ public class CursorInteractor : MonoBehaviour
             if (_pressedVisualElement != null)
             {
                 UsingUIToolkitPointerEvent(PointerMoveEvent.GetPooled(), _pressedVisualElement, _alignedPointerPos, _pointer.delta);
+
+                if (!_isDragging)
+                {
+                    float dist = Vector2.Distance(_pressStartScreenPos, screenPos);
+                    if (dist > _dragThreshold)
+                    {
+                        _isDragging = true;
+                        // Envoi de l'événement d'annulation pour désarmer le bouton UI Toolkit
+                        UsingUIToolkitPointerEvent(PointerCancelEvent.GetPooled(), _pressedVisualElement, _alignedPointerPos, _pointer.delta);
+                    }
+                }
             }
 
             if (_pointer.pointerDrag != null)
@@ -203,6 +255,7 @@ public class CursorInteractor : MonoBehaviour
             if (_pressedVisualElement != null)
             {
                 UsingUIToolkitPointerEvent(PointerUpEvent.GetPooled(), _pressedVisualElement, _alignedPointerPos, _pointer.delta);
+                _isDragging = false;
                 
                 float travelDistance = Vector2.Distance(_pressStartScreenPos, screenPos);
                 bool isDragIntent = travelDistance > _dragThreshold;
@@ -265,7 +318,7 @@ public class CursorInteractor : MonoBehaviour
     {
         try
         {
-            // Debug.Log($"HandleUI: Root={(uiDoc.rootVisualElement != null)} Hit={physicsHit.HasValue}");
+            if (_debug) Debug.Log($"HandleUI: Root={(uiDoc.rootVisualElement != null)} Hit={physicsHit.HasValue}");
             if (uiDoc.rootVisualElement == null) return;
             
             EnforceButtonPicking(uiDoc.rootVisualElement);
@@ -288,17 +341,21 @@ public class CursorInteractor : MonoBehaviour
             
             if (picked != null)
             {
-                if (_isClicking || picked != _currentVisualElement)
-                {
-                    // Debug.Log($"[XR_DEBUG] Raw Hit: '{picked.name}' (Type: {picked.GetType().Name})");
-                }
+                if (_debug) Debug.Log($"<color=cyan>[CursorInteractor]</color> UI Element Picked: '{picked.name}' (Type: {picked.GetType().Name}) at panel position {panelPos}");
                 
                 var originalPicked = picked;
                 picked = GetInteractiveParent(picked); // recupere le premier obj interactif en parent
                 
-                if (originalPicked != picked && _isClicking)
+                if (originalPicked != picked)
                 {
-                    //Debug.Log($"[XR_DEBUG] Redirected '{originalPicked.name}' ({originalPicked.GetType().Name}) -> Parent '{picked.name}' ({picked.GetType().Name})");
+                    if (_debug) Debug.Log($"<color=cyan>[CursorInteractor]</color> UI Redirected: '{originalPicked.name}' -> Parent '{picked.name}'");
+                }
+            }
+            else
+            {
+                if (Time.frameCount % 10 == 0) // avoid flood but keep informed
+                {
+                    if (_debug) Debug.LogWarning($"<color=yellow>[CursorInteractor]</color> Hit UIDocument panel, but UI Toolkit Pick() returned NULL at local panel pos: {panelPos}");
                 }
             }
             
@@ -310,16 +367,17 @@ public class CursorInteractor : MonoBehaviour
                 if(picked != null)
                 {
                     string elementName = string.IsNullOrEmpty(picked.name) ? "Élément_Sans_Nom" : picked.name;
-                    //Debug.Log($"<color=cyan>[HOVER]</color> Curseur entre sur : <b>{elementName}</b> <i>({picked.GetType().Name})</i>");
+                    if (_debug) Debug.Log($"<color=green>[CursorInteractor]</color> Hover Enter: <b>{elementName}</b> <i>({picked.GetType().Name})</i>");
                 }
                 else if (_currentVisualElement != null)
                 {
-                    if (_debug) Debug.Log($"<color=grey>[HOVER]</color> Curseur sort dans le vide.");
+                    if (_debug) Debug.Log($"<color=grey>[CursorInteractor]</color> Hover Exit from: {_currentVisualElement.name}");
                 }
                 if (_currentVisualElement != null)
                     UsingUIToolkitPointerEvent(PointerLeaveEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
                 
                 _currentVisualElement = picked;
+                IsHoveringUI = IsValidUIElement(_currentVisualElement);
                 
                 if (_currentVisualElement != null)
                     UsingUIToolkitPointerEvent(PointerEnterEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
@@ -364,8 +422,22 @@ public class CursorInteractor : MonoBehaviour
         // CRITICAL: Set Pointer ID so CapturePointer works!
         var idProp = PointerEventReflection<T>.PointerIdProp;
         if (idProp != null) idProp.SetValue(evt, 1); // Use ID 1 for main cursor
+
+        //if (UserUI.Instance != null)
+        //{
+        //    UserUI.Instance.PushInteractingPlayer(PlayerID);
+        //}
         
         target.SendEvent(evt);
+
+        // Nettoyage de la file si l'événement n'a pas été consommé (par ex: clic dans le vide)
+        //if (UserUI.Instance != null)
+        //{
+        //    if (UserUI.Instance.PeekInteractingPlayer() == PlayerID)
+        //    {
+        //        UserUI.Instance.PopInteractingPlayer();
+        //    }
+        //}
     }
     
     public void SetClicking(bool isClicking)
@@ -400,6 +472,30 @@ public class CursorInteractor : MonoBehaviour
         });
     }
     
+    private bool IsValidUIElement(VisualElement element)
+    {
+        if (element == null) return false;
+        
+        VisualElement current = element;
+        while (current != null)
+        {
+            if (current is Button || current is RadioButton || current is Toggle || current is Scroller || current is Slider) return true;
+            
+            if (current.ClassListContains("feature-window")) return true;
+            
+            if (current.name == "sidebar-container" || 
+                current.name == "toolbar-unified" || 
+                current.name == "drag-handle" || 
+                current.name == "tooltip-container") 
+            {
+                return true;
+            }
+            
+            current = current.parent;
+        }
+        return false;
+    }
+
     private VisualElement GetInteractiveParent(VisualElement element)
     {
         VisualElement current = element;

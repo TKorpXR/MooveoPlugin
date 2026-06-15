@@ -188,7 +188,7 @@ public class UICalibrationManager : MonoBehaviour
     /// <summary>
     /// Met a jour l'ui concernant la calibration d'un point si il y a eu une erreur durant celle ci
     /// </summary>
-    public void MarkCurrentPointError()
+    public void MarkCurrentPointError(string errorMessage)
     {
         _currentPointHasError = true;
     }
