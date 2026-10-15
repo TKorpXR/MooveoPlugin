@@ -3,23 +3,59 @@ using UnityEngine.UIElements;
 
 public static class UIToast
 {
+    public enum Kind { Success, Error, Warning }
+
     public static void Show(VisualElement root, string title, string message, bool isSuccess, float durationMs = 3000f)
+        => Show(root, title, message, isSuccess ? Kind.Success : Kind.Error, durationMs);
+
+    private static NotificationLevel ToLevel(Kind kind)
     {
+        switch (kind)
+        {
+            case Kind.Error: return NotificationLevel.Error;
+            case Kind.Warning: return NotificationLevel.Warning;
+            default: return NotificationLevel.Info;
+        }
+    }
+
+    /// <summary>
+    /// ⚠ Compatibilité. Les 32 appels existants passent par ici sans changer d'un caractère, mais
+    /// sont REDIRIGÉS vers <see cref="NotificationCenter"/> dès qu'un hôte global existe : un toast
+    /// lié à la racine d'un panneau disparaît avec lui et ne peut rien afficher avant son ouverture.
+    /// Le rendu local ne sert plus que de repli — notamment l'overlay de calibration, qui vit dans
+    /// une scène où l'hôte global n'existe pas.
+    /// </summary>
+    public static void Show(VisualElement root, string title, string message, Kind kind, float durationMs = 3000f)
+    {
+        if (NotificationHost.Instance != null)
+        {
+            NotificationCenter.Notify(ToLevel(kind), title, message, durationMs: durationMs);
+            return;
+        }
+
         if (root == null) return;
 
         // Container
         var toast = new VisualElement();
         toast.AddToClassList("toast-container");
         toast.AddToClassList("toast--hidden"); // Start hidden
-        
-        if (isSuccess) toast.AddToClassList("toast--success");
-        else toast.AddToClassList("toast--error");
+
+        switch (kind)
+        {
+            case Kind.Success: toast.AddToClassList("toast--success"); break;
+            case Kind.Warning: toast.AddToClassList("toast--warning"); break;
+            default:           toast.AddToClassList("toast--error");   break;
+        }
 
         // Icon
         var icon = new VisualElement();
         icon.AddToClassList("toast-icon");
-        // Using existing generic icon classes
-        icon.AddToClassList(isSuccess ? "icon-status-ok" : "icon-close"); 
+        switch (kind)
+        {
+            case Kind.Success: icon.AddToClassList("icon-status-ok"); break;
+            case Kind.Warning: icon.AddToClassList("icon-status-warning"); break;
+            default:           icon.AddToClassList("icon-close"); break;
+        }
         toast.Add(icon);
 
         // Text container
@@ -47,7 +83,7 @@ public static class UIToast
         toast.schedule.Execute(() =>
         {
             toast.AddToClassList("toast--hidden");
-            
+
             // Remove from hierarchy after animation
             toast.schedule.Execute(() =>
             {
@@ -56,7 +92,7 @@ public static class UIToast
                     root.Remove(toast);
                 }
             }).StartingIn(300); // 300ms for exit animation
-            
+
         }).StartingIn((long)durationMs);
     }
 }

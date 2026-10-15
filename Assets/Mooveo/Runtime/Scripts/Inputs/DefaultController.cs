@@ -95,29 +95,32 @@ public class DefaultController : MonoBehaviour
         if (_debug) Debug.Log($"[{nameof(DefaultController)}] HandleThumb called");
     }
 
-    public void HandleIsTracked(bool isTracked)
+    public virtual void HandleIsTracked(bool isTracked)
     {
         if (_debug) Debug.Log($"[{nameof(DefaultController)}] HandleIsTracked called with isTracked: {isTracked}");
         IsTracked = isTracked;
     }
+
+    public virtual void HandleDeviceConnected(bool connected) { }
 
     public virtual void Bind()
     {
         if (_reader == null) return;
 
         _reader.IsTracked += HandleIsTracked;
+        _reader.DeviceConnectedChanged += HandleDeviceConnected;
         
         _reader.TriggerChanged += HandleTrigger;
         _reader.TriggerPressed += HandleTriggerPressed;
         _reader.TriggerReleased += HandleTriggerReleased;
 
-        _reader.AButtonPressed += HandleAPressed;
+        _reader.AButtonPressed += OnAPressed;
         _reader.AButtonReleased += HandleAReleased;
 
         _reader.BButtonPressed += HandleBPressed;
         _reader.BButtonReleased += HandleBReleased;
         
-        _reader.ThumbButtonPressed += HandleThumb;
+        _reader.ThumbButtonPressed += OnThumb;
 
         _reader.ScrollChanged += HandleScroll;
 
@@ -130,20 +133,44 @@ public class DefaultController : MonoBehaviour
     {
         if (_reader == null) return;
 
+        _reader.IsTracked -= HandleIsTracked;
+        _reader.DeviceConnectedChanged -= HandleDeviceConnected;
+
         _reader.TriggerChanged -= HandleTrigger;
         _reader.TriggerPressed -= HandleTriggerPressed;
         _reader.TriggerReleased -= HandleTriggerReleased;
 
-        _reader.AButtonPressed -= HandleAPressed;
+        _reader.AButtonPressed -= OnAPressed;
         _reader.AButtonReleased -= HandleAReleased;
 
         _reader.BButtonPressed -= HandleBPressed;
         _reader.BButtonReleased -= HandleBReleased;
         
-        _reader.ThumbButtonPressed -= HandleThumb;
+        _reader.ThumbButtonPressed -= OnThumb;
 
         _reader.ScrollChanged -= HandleScroll;
 
+    }
+
+    // =========================================================================
+    // Popup modale — interception AVANT les gestionnaires métier
+    // =========================================================================
+    // ⚠ Posée ICI, dans la classe de base, elle vaut pour TOUS les contrôleurs (peintre comme
+    // testeur de calibration) et couvre les deux scènes en un seul point. Sans consommation, la
+    // poignée déclencherait aussi l'annulation du peintre en fermant la popup.
+    // La GÂCHETTE n'est PAS interceptée : c'est elle qui clique dans l'interface. Le blocage de la
+    // progression se fait à l'arrivée (UICalibrationToolkit.NotifyOnNextStep).
+
+    private void OnAPressed()
+    {
+        if (ModalPopups.IsOpen) { ModalPopups.Dismiss(); return; }
+        HandleAPressed();
+    }
+
+    private void OnThumb()
+    {
+        if (ModalPopups.IsOpen) { ModalPopups.Confirm(); return; }
+        HandleThumb();
     }
 
     public virtual void HandleScroll(Vector2 value)

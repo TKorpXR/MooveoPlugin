@@ -51,7 +51,22 @@ public class UIInputToolDebugger : MonoBehaviour
     public void ToggleDebugger(bool visible)
     {
         _enabled = visible;
-        ApplyEnabledState();
+        _isActive = visible;
+        if (_root != null) _root.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+
+        if (visible)
+        {
+            _controllers.Clear();
+            _controllers.AddRange(FindObjectsOfType<DefaultController>(false));
+            
+            BuildUI();
+            
+            if (_pollRoutine == null) _pollRoutine = StartCoroutine(PollForControllersRoutine());
+        }
+        else
+        {
+            if (_pollRoutine != null) { StopCoroutine(_pollRoutine); _pollRoutine = null; }
+        }
     }
 
     private void OnEnable()
@@ -130,8 +145,9 @@ public class UIInputToolDebugger : MonoBehaviour
 
     private void RefreshControllers()
     {
+        bool isAdmin = GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value;
         var foundControllers = FindObjectsOfType<DefaultController>()
-            .Where(controller => controller != null && controller.IsTracked)
+            .Where(controller => controller != null && (controller.IsTracked || isAdmin))
             .ToList();
 
         bool hasNewController = false;
@@ -176,8 +192,9 @@ public class UIInputToolDebugger : MonoBehaviour
 
     public void Init(List<DefaultController> controllers)
     {
+        bool isAdmin = GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value;
         _controllers = (controllers ?? new List<DefaultController>())
-            .Where(controller => controller != null && controller.IsTracked)
+            .Where(controller => controller != null && (controller.IsTracked || isAdmin))
             .ToList();
 
         if (_enabled)
@@ -200,6 +217,7 @@ public class UIInputToolDebugger : MonoBehaviour
         _controllersContainer.Clear();
 
         AddStartOverCalibrationButton(_controllersContainer);
+        AddLaunchGameButton(_controllersContainer);
 
         // Bouton global pour rafraîchir les panels de raccourcis
         // (les raccourcis sont souvent assignés après le BuildUI initial)
@@ -207,6 +225,7 @@ public class UIInputToolDebugger : MonoBehaviour
         var btnRefresh = new Button(refreshAction)
         {
             text = "🔄 Actualiser les raccourcis",
+            tooltip = "Actualiser les raccourcis",
             userData = refreshAction
         };
         btnRefresh.style.height = 36;
@@ -216,7 +235,8 @@ public class UIInputToolDebugger : MonoBehaviour
         btnRefresh.style.color = Color.white;
         _controllersContainer.Add(btnRefresh);
 
-        foreach (var controller in _controllers.Where(controller => controller != null && controller.IsTracked))
+        bool isAdmin = GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value;
+        foreach (var controller in _controllers.Where(controller => controller != null && (controller.IsTracked || isAdmin)))
         {
             var row = new VisualElement();
             row.AddToClassList("controller-row");
@@ -258,6 +278,7 @@ public class UIInputToolDebugger : MonoBehaviour
             var btnA = new Button(actionA)
             {
                 text = "A",
+                tooltip = "Simuler le bouton A",
                 userData = actionA
             };
             btnA.AddToClassList("btn-action-blue");
@@ -269,13 +290,14 @@ public class UIInputToolDebugger : MonoBehaviour
             {
                 if (controller is DefaultController pc)
                 {
-                    //pc.ForceCenterCursor();
+                    //pc.ForceCenterCursor(); // propre au jeu (PainterController)
                 }
                 controller.HandleThumb();
             };
             var btnThumb = new Button(actionThumb)
             {
                 text = "Thumb",
+                tooltip = "Simuler le joystick",
                 userData = actionThumb
             };
             btnThumb.AddToClassList("btn-action-green");
@@ -332,6 +354,7 @@ public class UIInputToolDebugger : MonoBehaviour
                         var btnTest = new Button(testAction)
                         {
                             text = btnLabel,
+                            tooltip = $"Tester {evt1} + {evt2}",
                             userData = testAction
                         };
                         btnTest.style.height = 36;
@@ -374,6 +397,7 @@ public class UIInputToolDebugger : MonoBehaviour
         var startOverButton = new Button(startOverCalibrationAction)
         {
             text = "Recommencer la calibration",
+            tooltip = "Recommencer la calibration",
             userData = startOverCalibrationAction
         };
 
@@ -385,6 +409,36 @@ public class UIInputToolDebugger : MonoBehaviour
         startOverButton.style.unityFontStyleAndWeight = FontStyle.Bold;
 
         parent.Add(startOverButton);
+    }
+
+    private void AddLaunchGameButton(VisualElement parent)
+    {
+        Action launchGameAction = () =>
+        {
+            if (CalibrationManager.instance == null)
+            {
+                Debug.LogWarning("[UIInputToolDebugger] Impossible de lancer le jeu : CalibrationManager.instance est null.");
+                return;
+            }
+
+            CalibrationManager.instance.Launch();
+        };
+
+        var launchButton = new Button(launchGameAction)
+        {
+            text = "Lancer le jeu",
+            tooltip = "Lancer le jeu",
+            userData = launchGameAction
+        };
+
+        launchButton.style.height = 45;
+        launchButton.style.fontSize = 16;
+        launchButton.style.marginBottom = 15;
+        launchButton.style.backgroundColor = new Color(0.18f, 0.55f, 0.34f, 0.95f);
+        launchButton.style.color = Color.white;
+        launchButton.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+        parent.Add(launchButton);
     }
 
     public bool TryInteractWithDebugger(Vector2 screenPos, bool isClick)

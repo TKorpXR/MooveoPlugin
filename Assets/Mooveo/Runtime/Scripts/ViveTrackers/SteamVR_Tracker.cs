@@ -91,7 +91,27 @@ public class SteamVR_Tracker : MonoBehaviour {
 
     public static Quaternion GetMatrixRotation(Matrix4x4 matrix) => Quaternion.LookRotation(new Vector3(matrix.m02, matrix.m12, matrix.m22), new Vector3(matrix.m01, matrix.m11, matrix.m21));
 
+    [Tooltip("Ré-résoudre l'index OpenVR par rôle (main gauche / droite). Activé par le profil matériel PICO : une manette en veille peut revenir sur un autre index.")]
+    public bool resolveIndexByRole = false;
+    private const float RoleResolvePeriod = 0.5f;
+    private float _nextRoleResolve;
+
+    // L'index d'un rôle peut changer (veille, reconnexion) : on le relit périodiquement, sans figer
+    // la pose sur un index devenu celui d'un autre appareil.
+    void ResolveIndexFromRole() {
+        if (!resolveIndexByRole || controllerRole == ETrackedControllerRole.Invalid) return;
+        if (Time.unscaledTime < _nextRoleResolve) return;
+        _nextRoleResolve = Time.unscaledTime + RoleResolvePeriod;
+
+        var system = OpenVR.System;
+        if (system == null) return;
+        uint index = system.GetTrackedDeviceIndexForControllerRole(controllerRole);
+        if (index == OpenVR.k_unTrackedDeviceIndexInvalid || index >= OpenVR.k_unMaxTrackedDeviceCount) return;
+        device = (Device)(int)index;
+    }
+
     void UpdateTransform(TrackedDevicePose_t[] poses) {
+        ResolveIndexFromRole();
         if (device == Device.None) return;
 
         TrackedDevicePose_t pose = poses[(int)device];

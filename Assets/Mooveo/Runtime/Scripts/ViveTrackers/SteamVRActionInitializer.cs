@@ -10,6 +10,15 @@ public class ViveTrackerAutoSetup : MonoBehaviour
 
     void Awake()
     {
+        // Manifeste propre aux trackers : avec des manettes (profil PICO), l'app reste en mode
+        // legacy, et SteamVR applique le binding legacy fourni par le pilote de la manette.
+        if (!HardwareProfiles.Current.InstallTrackerActionManifest)
+        {
+            Debug.Log($"[AutoSetup] Manifeste d'actions trackers ignoré (profil {HardwareProfiles.Current.DisplayName}).");
+            enabled = false;
+            return;
+        }
+
         var system = OpenVR.System;
         var input = OpenVR.Input;
         if (system == null || input == null) return;

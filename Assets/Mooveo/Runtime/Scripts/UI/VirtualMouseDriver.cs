@@ -14,6 +14,8 @@ public class VirtualMouseDriver : MonoBehaviour
     
     private VisualElement _currentHoveredElement;
     private VisualElement _pressedElement;
+    // Document de l'appui en cours (cf. UpdateMousePosition, EndPress).
+    private VisualElement _pressedDocRoot;
     private UIDocument _currentUIDoc;
     private Vector2 _lastPanelPos;
     
@@ -25,14 +27,15 @@ public class VirtualMouseDriver : MonoBehaviour
     private void Start()
     {
         var controller = GetComponentInParent<DefaultController>();
-        if (controller != null) PointerId = controller.PlayerID;
+        if (controller != null) PointerId = UnityEngine.UIElements.PointerId.touchPointerIdBase + controller.PlayerID;
     }
     
     public void UpdateMousePosition(Vector2 panelPos, Vector2 screenPos, UIDocument targetUI) //screenpos
     {
         // --- BOOTSTRAP : LE RÉVEIL DU PANNEAU ---
-        // Si on touche un nouveau menu, on le réveille avec un event natif au pixel près
-        if (targetUI != null && targetUI != _currentUIDoc)
+        // En admin, garder la souris physique courante : la souris fantôme volerait ses clics.
+        // Pour les trackers, réveiller un nouveau panneau avec un événement natif.
+        if (targetUI != null && targetUI != _currentUIDoc && (GlobalSettings.Core.GlobalSettings.Instance == null || !GlobalSettings.Core.GlobalSettings.Instance.Admin.Value))
         {
             if (_bootstrapMouse == null)
             {
@@ -42,10 +45,19 @@ public class VirtualMouseDriver : MonoBehaviour
             InputSystem.QueueStateEvent(_bootstrapMouse, new MouseState { position = screenPos });
         }
 
+        bool hasTarget = targetUI != null && targetUI.rootVisualElement != null && targetUI.rootVisualElement.panel != null;
+
+        // ⚠ Un appui appartient au document où il a commencé : il se termine dès qu'on n'en vise
+        // plus aucun (le relâchement, fait hors mode UI, ne serait jamais relayé) ou qu'on en vise
+        // un autre (à la frame de sortie, sa position vient d'un autre repère et projetait la liste
+        // tout en bas). Avant d'écraser _lastPanelPos : on s'arrête à la dernière position valide.
+        bool leftPressedDocument = hasTarget && _pressedDocRoot != null && targetUI.rootVisualElement != _pressedDocRoot;
+        if (!hasTarget || leftPressedDocument) EndPress(allowClick: false);
+
         _lastPanelPos = panelPos;
         _currentUIDoc = targetUI;
 
-        if (targetUI == null || targetUI.rootVisualElement == null || targetUI.rootVisualElement.panel == null)
+        if (!hasTarget)
         {
             ClearHover();
             return;
@@ -53,13 +65,23 @@ public class VirtualMouseDriver : MonoBehaviour
         
         SendPointerEvent(PointerMoveEvent.GetPooled(), targetUI.rootVisualElement, panelPos);
 
-        VisualElement picked = targetUI.rootVisualElement.panel.Pick(panelPos);
+        VisualElement picked = WorldPanelUtils.PickAt(targetUI.rootVisualElement.panel, panelPos);
         picked = GetInteractiveParent(picked);
 
         if (_isClicking)
         {
             if (_pressedElement != null)
             {
+                // Slider : on pilote directement la valeur depuis la position du curseur (le drag interne
+                // du slider ne réagit pas aux PointerEvents synthétiques -> sinon jouable qu'à la souris).
+                // On NE propage PAS de PointerMove (sinon le ScrollView parent scrollerait en même temps).
+                if (_pressedElement is Slider || _pressedElement is SliderInt)
+                {
+                    DragSliderIfAny(_pressedElement, panelPos);
+                    _isDragging = true; // évite un ClickEvent parasite au relâchement
+                    return;
+                }
+
                 if (!_isDragging && Vector2.Distance(_pressStartPanelPos, panelPos) > dragThreshold)
                 {
                     _isDragging = true;
@@ -87,46 +109,80 @@ public class VirtualMouseDriver : MonoBehaviour
         }
     }
 
+    // Relevé de debug (PaintDebug.ShowUiSpray) : ce que le pilote croit survoler et presser.
+    public VisualElement DebugHovered => _currentHoveredElement;
+    public VisualElement DebugPressed => _pressedElement;
+    public bool DebugIsClicking => _isClicking;
+    public UIDocument DebugDocument => _currentUIDoc;
+
     public void SimulateLeftClick(bool isDown)
     {
-        _isClicking = isDown;
+        // Le relâchement ne dépend pas du document visé : l'élément pressé vit dans le sien.
+        if (!isDown)
+        {
+            EndPress(allowClick: true);
+            return;
+        }
+
+        _isClicking = true;
 
         if (_currentUIDoc == null) return;
 
-        if (isDown)
-        {
-            _isDragging = false;
-            _pressStartPanelPos = _lastPanelPos;
-            _pressedElement = _currentHoveredElement;
+        _isDragging = false;
+        _pressStartPanelPos = _lastPanelPos;
+        _pressedElement = _currentHoveredElement;
+        _pressedDocRoot = _pressedElement != null ? _currentUIDoc.rootVisualElement : null;
 
-            if (_pressedElement != null)
-            {
-                SendPointerEvent(PointerDownEvent.GetPooled(), _pressedElement, _lastPanelPos);
-            }
-        }
-        else
+        if (_pressedElement != null)
         {
-            if (_pressedElement != null)
-            {
-                SendPointerEvent(PointerUpEvent.GetPooled(), _pressedElement, _lastPanelPos);
-                
-                if (!_isDragging && _pressedElement == _currentHoveredElement)
-                {
-                    SendPointerEvent(ClickEvent.GetPooled(), _pressedElement, _lastPanelPos);
-                    
-                    if (_pressedElement is RadioButton rb)
-                    {
-                        if (!rb.value) rb.value = true;
-                    }
-                    else if (_pressedElement is Toggle t)
-                    {
-                        t.value = !t.value;
-                    }
-                }
-                
-                _pressedElement = null;
-            }
-            _isDragging = false;
+            SendPointerEvent(PointerDownEvent.GetPooled(), _pressedElement, _lastPanelPos);
+            DragSliderIfAny(_pressedElement, _lastPanelPos); // saut immédiat à la position du curseur
+        }
+    }
+
+    /// <summary>Termine l'appui en cours (sans effet s'il n'y en a pas).</summary>
+    /// <param name="allowClick">Faux pour une interruption (le spray a quitté le document) : ni clic,
+    /// ni inertie.</param>
+    private void EndPress(bool allowClick)
+    {
+        VisualElement pressed = _pressedElement;
+        VisualElement pressedRoot = _pressedDocRoot;
+        bool wasDragging = _isDragging;
+
+        _isClicking = false;
+        _isDragging = false;
+        _pressedElement = null;
+        _pressedDocRoot = null;
+
+        if (pressed == null) return;
+
+        // Interruption : la capture est rendue AVANT le PointerUp. `HasPointerCapture` lit la capture
+        // en attente et devient faux aussitôt : le TouchScrollManipulator s'arrête net, sans inertie.
+        IPanel pressedPanel = pressed.panel ?? pressedRoot?.panel;
+        if (!allowClick && pressedPanel != null) PointerCaptureHelper.ReleasePointer(pressedPanel, PointerId);
+
+        // ⚠ Élément détruit pendant l'appui (liste reconstruite pendant un scan) : la capture est
+        // tenue par un parent resté en place. Le PointerUp part à la racine, la capture le redirige.
+        if (pressed.panel == null)
+        {
+            if (pressedRoot != null && pressedRoot.panel != null)
+                SendPointerEvent(PointerUpEvent.GetPooled(), pressedRoot, _lastPanelPos);
+            return;
+        }
+
+        SendPointerEvent(PointerUpEvent.GetPooled(), pressed, _lastPanelPos);
+
+        if (!allowClick || wasDragging || pressed != _currentHoveredElement) return;
+
+        SendPointerEvent(ClickEvent.GetPooled(), pressed, _lastPanelPos);
+
+        if (pressed is RadioButton rb)
+        {
+            if (!rb.value) rb.value = true;
+        }
+        else if (pressed is Toggle t)
+        {
+            t.value = !t.value;
         }
     }
 
@@ -137,6 +193,28 @@ public class VirtualMouseDriver : MonoBehaviour
             SendPointerEvent(PointerLeaveEvent.GetPooled(), _currentHoveredElement, _lastPanelPos);
             _currentHoveredElement = null;
         }
+    }
+
+    /// <summary>
+    /// Pilote la valeur d'un Slider/SliderInt directement depuis la position du curseur (panneau),
+    /// car le drag interne du slider ne réagit pas aux PointerEvents synthétiques de la manette.
+    /// </summary>
+    public static void DragSliderIfAny(VisualElement el, Vector2 panelPos)
+    {
+        if (el is Slider sl)
+            sl.value = Mathf.Lerp(sl.lowValue, sl.highValue, SliderRatio(sl, sl.direction, panelPos));
+        else if (el is SliderInt si)
+            si.value = Mathf.RoundToInt(Mathf.Lerp(si.lowValue, si.highValue, SliderRatio(si, si.direction, panelPos)));
+    }
+
+    /// <summary>Position normalisée [0,1] du curseur le long de la piste du slider (utilise le tracker si présent).</summary>
+    private static float SliderRatio(VisualElement slider, SliderDirection dir, Vector2 panelPos)
+    {
+        VisualElement track = slider.Q(className: "unity-base-slider__tracker") ?? slider;
+        Rect wb = track.worldBound;
+        if (dir == SliderDirection.Vertical)
+            return Mathf.Clamp01(Mathf.InverseLerp(wb.yMax, wb.yMin, panelPos.y)); // bas = low, haut = high
+        return Mathf.Clamp01(Mathf.InverseLerp(wb.xMin, wb.xMax, panelPos.x));
     }
 
     private VisualElement GetInteractiveParent(VisualElement element)
@@ -161,6 +239,7 @@ public class VirtualMouseDriver : MonoBehaviour
         var idProp = typeof(T).GetProperty("pointerId", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         if (idProp != null) idProp.SetValue(evt, PointerId);
 
-        target.SendEvent(evt);
+        try { target?.SendEvent(evt); }
+        finally { evt.Dispose(); }
     }
 }

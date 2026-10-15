@@ -29,7 +29,9 @@ public class InputReader : MonoBehaviour
     public event Action<Quaternion> RotationChanged;
     public event Action<int> IsTrackedChanged;
     public event Action<bool> IsTracked;
-    
+    public event Action<bool> DeviceConnectedChanged;
+    private bool? _lastDeviceConnected;
+
     // Simulation variables
     private bool _simulatingTrigger = false;
 
@@ -37,10 +39,17 @@ public class InputReader : MonoBehaviour
 
     #region OpenVR Vive Trackers variables
 
-    private readonly ulong triggerMask = 1ul << (int)EVRButtonId.k_EButton_SteamVR_Trigger; // Pin 4
-    private readonly ulong gripMask    = 1ul << (int)EVRButtonId.k_EButton_Grip;            // Pin 3
-    private readonly ulong menuMask    = 1ul << (int)EVRButtonId.k_EButton_SteamVR_Touchpad; // 4294967296
-    
+    // Masques du PROFIL MATÉRIEL (HardwareProfiles). Vive : gâchette = Pin 4, poignée = Pin 3,
+    // pouce = Touchpad — les constantes d'origine. PICO : mêmes bits + A/X au pouce, B/Y en « B ».
+    private static ulong TriggerMask => HardwareProfiles.Current.TriggerMask;
+    private static ulong GripMask    => HardwareProfiles.Current.GripMask;
+    private static ulong ThumbMask   => HardwareProfiles.Current.ThumbMask;
+    private static ulong BMask       => HardwareProfiles.Current.BMask;
+
+    // Dernière valeur analogique émise : on ne renvoie que les variations.
+    private float _lastAnalogTrigger;
+    private const float AnalogTriggerEpsilon = 0.01f;
+
     private TrackedDevicePose_t[] _poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
     
     // Dictionnaire pour stocker l'état précédent de chaque appareil (si plusieurs trackers)
@@ -79,7 +88,7 @@ public class InputReader : MonoBehaviour
 
     private void InitializeInput()
     {
-        if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
+        if (SimulationInputEnabled && GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
         {
             SimulateVR = true;
         }
@@ -100,7 +109,7 @@ public class InputReader : MonoBehaviour
     
     private void Update()
     {
-        if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
+        if (SimulationInputEnabled && GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
         {
             SimulateVR = true;
         }
@@ -122,13 +131,18 @@ public class InputReader : MonoBehaviour
         while (system.PollNextEvent(ref vrEvent, eventSize)) { }
         
         uint targetDeviceIndex = system.GetTrackedDeviceIndexForControllerRole(TargetRole);
-        if (targetDeviceIndex == OpenVR.k_unTrackedDeviceIndexInvalid) return;
+        if (targetDeviceIndex == OpenVR.k_unTrackedDeviceIndexInvalid)
+        {
+            ReportDeviceConnected(false);
+            return;
+        }
 
         // --- 1. GESTION DU TRACKING (Garantie à 100% si le tracker est vu) ---
         // On récupère les poses brutes de tous les appareils (sans demander les boutons)
         system.GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin.TrackingUniverseStanding, 0f, _poses);
         TrackedDevicePose_t pose = _poses[targetDeviceIndex];
-        
+        ReportDeviceConnected(pose.bDeviceIsConnected);
+
         bool isCurrentlyTracked = pose.bDeviceIsConnected && pose.bPoseIsValid;
 
         if (!_previousTrackedState.ContainsKey(targetDeviceIndex))
@@ -156,49 +170,94 @@ public class InputReader : MonoBehaviour
 
             ulong prevButtons = _previousButtonsState[targetDeviceIndex];
             
-            bool curTrigger = (currentButtons & triggerMask) != 0;
-            bool prevTrigger = (prevButtons & triggerMask) != 0;
-            if (curTrigger && !prevTrigger) 
-            { 
-                TriggerPressed?.Invoke(); 
-                TriggerChanged?.Invoke(1f); 
+            bool analog = HardwareProfiles.Current.AnalogTrigger;
+
+            bool curTrigger = (currentButtons & TriggerMask) != 0;
+            bool prevTrigger = (prevButtons & TriggerMask) != 0;
+            if (curTrigger && !prevTrigger)
+            {
+                TriggerPressed?.Invoke();
+                _lastAnalogTrigger = analog ? PressedTriggerValue(state) : 1f;
+                TriggerChanged?.Invoke(_lastAnalogTrigger);
             }
-            if (!curTrigger && prevTrigger) 
-            { 
-                TriggerReleased?.Invoke(); 
-                TriggerChanged?.Invoke(0f); 
+            else if (curTrigger && analog)
+            {
+                // Appui maintenu : la course de la gâchette dose le jet (si NumericTrigger est coupé).
+                float value = PressedTriggerValue(state);
+                if (Mathf.Abs(value - _lastAnalogTrigger) > AnalogTriggerEpsilon)
+                {
+                    _lastAnalogTrigger = value;
+                    TriggerChanged?.Invoke(value);
+                }
             }
-            
-            bool curGrip = (currentButtons & gripMask) != 0;
-            bool prevGrip = (prevButtons & gripMask) != 0;
+            if (!curTrigger && prevTrigger)
+            {
+                TriggerReleased?.Invoke();
+                _lastAnalogTrigger = 0f;
+                TriggerChanged?.Invoke(0f);
+            }
+
+            bool curGrip = (currentButtons & GripMask) != 0;
+            bool prevGrip = (prevButtons & GripMask) != 0;
             if (curGrip && !prevGrip) AButtonPressed?.Invoke();
             if (!curGrip && prevGrip) AButtonReleased?.Invoke();
-            
-            bool curMenu = (currentButtons & menuMask) != 0;
-            bool prevMenu = (prevButtons & menuMask) != 0;
+
+            // ⚠ Masque à PLUSIEURS bits (PICO : clic du stick OU A/X) : un seul front par appui,
+            // même si les deux boutons sont enfoncés l'un après l'autre.
+            bool curMenu = (currentButtons & ThumbMask) != 0;
+            bool prevMenu = (prevButtons & ThumbMask) != 0;
             if (curMenu && !prevMenu) ThumbButtonPressed?.Invoke();
+
+            // B : jamais émis par un tracker (masque nul dans le profil Vive).
+            if (BMask != 0)
+            {
+                bool curB = (currentButtons & BMask) != 0;
+                bool prevB = (prevButtons & BMask) != 0;
+                if (curB && !prevB) BButtonPressed?.Invoke();
+                if (!curB && prevB) BButtonReleased?.Invoke();
+            }
 
             _previousButtonsState[targetDeviceIndex] = currentButtons;
         }
     }
 
+    // Le bit « appuyé » est posé par le pilote à son propre seuil : la course analogique peut encore
+    // valoir moins. Jamais zéro tant que le bit est là, sinon le peintre croirait à un relâchement.
+    private static float PressedTriggerValue(VRControllerState_t state) =>
+        Mathf.Clamp(state.rAxis1.x, 0.05f, 1f);
+
+    // Tracker éteint : Unity ne le signale qu'au rallumage, OpenVR tout de suite.
+    private void ReportDeviceConnected(bool connected)
+    {
+        // Jamais vu : un rôle non attribué n'est pas une déconnexion.
+        if (_lastDeviceConnected == null && !connected) return;
+        if (_lastDeviceConnected == connected) return;
+        _lastDeviceConnected = connected;
+        DeviceConnectedChanged?.Invoke(connected);
+    }
+
+    // Multiple admin sprays share one mouse. Only the selected spray consumes its input.
+    public bool SimulationInputEnabled { get; set; } = true;
+    // La bombe Admin réserve le clic gauche aux menus. Les autres simulations gardent leur commande.
+    public bool SimulationUsesRightButton { get; set; }
+
     private void HandleSimulation()
     {
-        if (Mouse.current == null) return;
+        if (!SimulationInputEnabled || Mouse.current == null) return;
 
-        // --- Clic Gauche = Trigger ---
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        var trigger = SimulationUsesRightButton ? Mouse.current.rightButton : Mouse.current.leftButton;
+        if (trigger.wasPressedThisFrame)
         {
             TriggerPressed?.Invoke();
             TriggerChanged?.Invoke(1f); 
         }
-        if (Mouse.current.leftButton.wasReleasedThisFrame)
+        if (trigger.wasReleasedThisFrame)
         {
             TriggerReleased?.Invoke();
             TriggerChanged?.Invoke(0f);
         }
         // Maintien
-        if (Mouse.current.leftButton.isPressed)
+        if (trigger.isPressed)
         {
             TriggerChanged?.Invoke(1f);
         }

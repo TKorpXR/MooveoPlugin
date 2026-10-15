@@ -22,6 +22,11 @@ public static class AppLauncher
             return false;
         }
         
+        // SteamVR : sa configuration doit correspondre au profil matériel AVANT qu'il ne démarre.
+        // Posé ICI, dans le seul lanceur, pour couvrir tous les chemins : boucle de calibration,
+        // bouton de l'écran de calibration, réparation « Lancer SteamVR ».
+        if (IsSteamVRLauncher(path)) SteamVRBootstrap.EnsureBeforeLaunch();
+
         try
         {
             ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -40,5 +45,12 @@ public static class AppLauncher
             UnityEngine.Debug.LogError($"[AppLauncher] Impossible de lancer {path} : {e.Message}");
             return false;
         }
+    }
+
+    private static bool IsSteamVRLauncher(string path)
+    {
+        string name = Path.GetFileName(path);
+        return string.Equals(name, "vrmonitor.exe", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(name, "vrstartup.exe", System.StringComparison.OrdinalIgnoreCase);
     }
 }

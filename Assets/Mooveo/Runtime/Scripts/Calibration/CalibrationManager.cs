@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Ricimi;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,7 +13,13 @@ using Quaternion = UnityEngine.Quaternion;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 using Valve.VR;
+// ⚠ "Button" et "Slider" existent À LA FOIS dans UnityEngine.UI (déjà utilisé dans ce fichier) et
+// UnityEngine.UIElements — ambigus si on les écrit en nu. "Slider" est qualifié à sa déclaration
+// (_debugSlider) ; "Button" est qualifié aux deux endroits où le bouton « Matériel » l'utilise.
+// Le "using" reste nécessaire tel quel : sans lui, VisualElement.Q&lt;T&gt;() (méthode d'extension)
+// ne se résout pas.
 
 public enum EDeviceCheckerType
 { 
@@ -21,9 +28,13 @@ public enum EDeviceCheckerType
     RightController, 
     AnyController,
     Tracker,
-    SteamVR, 
-    EosUtility, 
-    HotFolder 
+    SteamVR,
+    EosUtility,
+    HotFolder,
+    // ⚠ Enum SÉRIALISÉE dans la scène : on ajoute TOUJOURS à la fin.
+    HotFolderBanner,
+    /// <summary>Ligne adossée à une ISystemCheck ; sa clé porte le nom de la vérification.</summary>
+    SystemCheck
 }
 
 [Serializable]
@@ -33,6 +44,9 @@ public class DeviceCheckerConfig
     public string Label;
     public EDeviceCheckerType Type;
     public bool RequiresExe;
+
+    [Tooltip("Contrôle informatif : son échec n'empêche pas de démarrer.")]
+    public bool Optional;
 }
 
 public class CalibrationManager : MonoBehaviour
@@ -63,7 +77,16 @@ public class CalibrationManager : MonoBehaviour
     private CalibrationController _adminTester;
 
     public event Action<List<DeviceCheckerConfig>> OnInitDevicesUI;
-    public event Action<string, string, bool, string> OnUpdateDeviceUI; 
+    public event Action<string, string, bool, string> OnUpdateDeviceUI;
+    /// <summary>Contrôle optionnel en échec : clé + raison courte. La ligne passe en avertissement.</summary>
+    public event Action<string, string, string, bool> OnDeviceWarning;
+    /// <summary>
+    /// Un checker <see cref="IAsyncDeviceChecker"/> tourne toujours après <see cref="StalledSeconds"/> :
+    /// clé, libellé, secondes écoulées depuis le lancement de CET appel. Ligne toujours BLOQUANTE
+    /// (on l'attend encore) — distinct d'<see cref="OnDeviceWarning"/>, qui referme un contrôle
+    /// optionnel. Se répète tant que l'appel ne rend pas la main, le compteur progresse.
+    /// </summary>
+    public event Action<string, string, float> OnDeviceStalled;
     public event Action OnAllDevicesReady;
     
     private List<Vector3> _points = new List<Vector3>();
@@ -81,8 +104,14 @@ public class CalibrationManager : MonoBehaviour
     private int _nPointsToCalibrate = 3;
     private Dictionary<CalibrationController, CalibrationCursorUI> _testercursors = new Dictionary<CalibrationController, CalibrationCursorUI>();
     
-    [SerializeField] private Slider _debugSlider;
+    // ⚠ UnityEngine.UI.Slider en toutes lettres : "Slider" existe aussi dans UnityEngine.UIElements
+    // (utilisé par le bouton « Matériel » ci-dessous), ambigu à la compilation sinon.
+    [SerializeField] private UnityEngine.UI.Slider _debugSlider;
     [SerializeField] protected bool _debug = false;
+
+    [Tooltip("TEST (éditeur seulement) : fait durer chaque scan HotFolder ce nombre de secondes, " +
+             "pour vérifier qu'un contrôle bloqué ne fige pas le reste de la liste. 0 = désactivé.")]
+    [SerializeField] private float _debugHotFolderHangSeconds = 0f;
 
     protected bool _devicesChecked = false;
     protected bool _needCalibration = false;
@@ -170,6 +199,11 @@ public class CalibrationManager : MonoBehaviour
             if (_debug) Debug.Log($"[CalibrationManager] L'appareil {device.name} ignoré car station de base.");
             return;
         }
+        if (HardwareDeviceRouting.Rejects(device, out string rejectReason))
+        {
+            if (_debug) Debug.Log($"[CalibrationManager] L'appareil {device.name} ignoré : {rejectReason}.");
+            return;
+        }
 
         InputConfig configToUse = null;
         int playerID = -1;
@@ -192,7 +226,7 @@ public class CalibrationManager : MonoBehaviour
         }
 
         // Default or unassigned
-        if (!isLeft && !isRight)
+        if (!isLeft && !isRight && HardwareDeviceRouting.AllowsForcedRightHand)
         {
             if (_debug) Debug.LogWarning($"[CalibrationManager] Impossible d'identifier {device.name}. Forçage en Right.");
             isRight = true;
@@ -255,13 +289,14 @@ public class CalibrationManager : MonoBehaviour
             if (headless)
             {
                 ETrackedControllerRole finalRole = (playerID == 0) ? ETrackedControllerRole.LeftHand : ETrackedControllerRole.RightHand;
-                uint deviceIndex = OpenVRUtility.GetDeviceIndexBySerialNumber(device.description.serial);
+                uint deviceIndex = HardwareDeviceRouting.ResolveOpenVRIndex(device.description.serial, finalRole);
 
                 SteamVR_Tracker steamVRTracker = instance.GetComponent<SteamVR_Tracker>();
                 if (steamVRTracker != null)
                 {
                     steamVRTracker.device = OpenVRUtility.GetSteamVRTrackerDevice(deviceIndex);
                     steamVRTracker.SetRole(finalRole);
+                    HardwareDeviceRouting.ConfigureTracker(steamVRTracker);
                     if (_debug) Debug.Log($"[CalibrationManager] SteamVR_Tracker assigné | Device : {steamVRTracker.device}");
                 }
 
@@ -293,6 +328,170 @@ public class CalibrationManager : MonoBehaviour
         GlobalSettings.Core.GlobalSettings.MainCamera = _camera;
         ScanAndSpawnTesters();
         Init();
+        StartCoroutine(AddHardwareProfileButtonRoutine());
+    }
+
+    /// <summary>
+    /// Bouton « Matériel » TOUJOURS accessible, quel que soit l'état de la calibration — posé
+    /// directement sur <c>RootOverlay</c> et non dans un des panneaux que
+    /// <c>UICalibrationToolkit.SetPanelVisibility</c> montre/masque.
+    ///
+    /// ⚠ Raison d'être : si le profil mémorisé ne correspond PAS au matériel réellement branché
+    /// (ex. profil Vive alors qu'un casque PICO est là), SteamVR ne fournit aucun rôle de
+    /// contrôleur que le profil actif sache lire — `AnyControllerChecker` ne trouve donc jamais
+    /// rien, et la liste de vérification reste bloquée pour toujours. Sans un accès qui ne dépende
+    /// PAS d'un contrôleur déjà détecté, l'opérateur n'aurait aucun moyen de s'en sortir : ce
+    /// bouton répond à la SOURIS (panneau SCREEN SPACE — OVERLAY), donc joignable à zéro
+    /// périphérique VR. Vécu et bloquant le 29/09/2026.
+    /// </summary>
+    private IEnumerator AddHardwareProfileButtonRoutine()
+    {
+        VisualElement root = null;
+        float deadline = Time.realtimeSinceStartup + 5f;
+        while (Time.realtimeSinceStartup < deadline)
+        {
+            root = UICalibrationToolkit.instance != null ? UICalibrationToolkit.instance.RootOverlay : null;
+            if (root != null) break;
+            yield return null;
+        }
+
+        if (root == null)
+        {
+            Debug.LogError("[CalibrationManager] Panneau de calibration introuvable : le bouton " +
+                           "« Matériel » (échappatoire si le profil ne correspond pas au matériel " +
+                           "branché) n'a pas pu être posé.");
+            yield break;
+        }
+        if (root.Q<UnityEngine.UIElements.Button>("btn-hardware-profile-escape") != null) yield break; // Déjà posé.
+        root.Add(BuildHardwareProfileButton(root));
+    }
+
+    /// <summary>
+    /// Pastille discrète en haut à droite : point de couleur (identifie le profil actif, PAS un
+    /// avertissement — les deux profils sont des configurations valides à égalité) + nom du profil,
+    /// dans le même habillage translucide que les boutons de <c>ChoicePopup</c>. Le survol s'anime
+    /// par callback, jamais en USS pur (§8 de CLAUDE.md — un bouton stylé inline écraserait un
+    /// éventuel `:hover`). Se tient à jour tout seul via <see cref="HardwareProfiles.Changed"/>,
+    /// désabonné à sa propre destruction pour ne pas laisser de fermeture accrochée après un
+    /// changement de scène.
+    /// </summary>
+    private UnityEngine.UIElements.Button BuildHardwareProfileButton(VisualElement root)
+    {
+        var idleColor = new Color(0.11f, 0.11f, 0.12f, 0.85f);
+        var hoverColor = new Color(0.20f, 0.20f, 0.22f, 0.92f);
+        var borderColor = new Color(1f, 1f, 1f, 0.18f);
+        var viveColor = new Color(0.18f, 0.80f, 0.44f);
+        var picoColor = new Color(0.35f, 0.62f, 0.95f);
+
+        var button = new UnityEngine.UIElements.Button
+            { name = "btn-hardware-profile-escape", tooltip = "Choisir le matériel de suivi utilisé sur ce poste" };
+        button.style.position = Position.Absolute;
+        button.style.top = 14;
+        button.style.right = 14;
+        button.style.flexDirection = FlexDirection.Row;
+        button.style.alignItems = Align.Center;
+        button.style.height = 40;
+        button.style.marginLeft = 0; button.style.marginRight = 0; button.style.marginTop = 0; button.style.marginBottom = 0;
+        button.style.paddingLeft = 14; button.style.paddingRight = 16; button.style.paddingTop = 0; button.style.paddingBottom = 0;
+        button.style.borderTopWidth = 1; button.style.borderBottomWidth = 1;
+        button.style.borderLeftWidth = 1; button.style.borderRightWidth = 1;
+        button.style.borderTopColor = borderColor; button.style.borderBottomColor = borderColor;
+        button.style.borderLeftColor = borderColor; button.style.borderRightColor = borderColor;
+        button.style.borderTopLeftRadius = 20; button.style.borderTopRightRadius = 20;
+        button.style.borderBottomLeftRadius = 20; button.style.borderBottomRightRadius = 20;
+        button.style.backgroundColor = idleColor;
+
+        var dot = new VisualElement { pickingMode = PickingMode.Ignore };
+        dot.style.width = 9; dot.style.height = 9;
+        dot.style.borderTopLeftRadius = 5; dot.style.borderTopRightRadius = 5;
+        dot.style.borderBottomLeftRadius = 5; dot.style.borderBottomRightRadius = 5;
+        dot.style.marginRight = 9; dot.style.flexShrink = 0;
+        button.Add(dot);
+
+        var label = new Label { pickingMode = PickingMode.Ignore };
+        label.style.color = Color.white;
+        label.style.fontSize = 15;
+        label.style.whiteSpace = WhiteSpace.NoWrap;
+        button.Add(label);
+
+        void Refresh()
+        {
+            HardwareProfileData profile = HardwareProfiles.Current;
+            label.text = profile.DisplayName;
+            dot.style.backgroundColor = profile.Id == HardwareProfile.Pico4Enterprise ? picoColor : viveColor;
+        }
+        Refresh();
+
+        System.Action<HardwareProfileData> onChanged = _ => Refresh();
+        HardwareProfiles.Changed += onChanged;
+        button.RegisterCallback<DetachFromPanelEvent>(e => HardwareProfiles.Changed -= onChanged);
+
+        button.RegisterCallback<PointerEnterEvent>(e => button.style.backgroundColor = hoverColor);
+        button.RegisterCallback<PointerLeaveEvent>(e => button.style.backgroundColor = idleColor);
+        button.RegisterCallback<ClickEvent>(
+            e => StartCoroutine(HardwareProfilePicker.ShowChangeMenu(root, OnHardwareProfileChangedFromCalibration)));
+
+        return button;
+    }
+
+    /// <summary>
+    /// Même remise à zéro que <see cref="StartOverCalibration"/> : un autre matériel n'a ni le même
+    /// suivi ni forcément les mêmes rôles de contrôleur, les testeurs en place doivent être
+    /// détruits et redécouverts, pas simplement gardés.
+    /// </summary>
+    private void OnHardwareProfileChangedFromCalibration(HardwareProfileData picked)
+    {
+        ClearTestCalibration(true); // Réinitialise aussi la suggestion de bascule.
+        ScanAndSpawnTesters();
+        Init();
+    }
+
+    // =========================================================================================
+    // Suggestion de bascule matériel — aucun contrôleur trouvé depuis 20 s (cf. bouton « Matériel »)
+    // =========================================================================================
+
+    private const float ControllerMismatchSuggestSeconds = 20f;
+    private float _anyControllerFailingSince = -1f;
+    private bool _hardwareMismatchSuggested = false;
+
+    private void TrackControllerMismatchSuggestion(bool controllerConnected)
+    {
+        if (controllerConnected) { ResetControllerMismatchSuggestion(); return; }
+
+        if (_anyControllerFailingSince < 0f)
+        {
+            _anyControllerFailingSince = Time.realtimeSinceStartup;
+            return;
+        }
+        if (_hardwareMismatchSuggested) return;
+        if (Time.realtimeSinceStartup - _anyControllerFailingSince < ControllerMismatchSuggestSeconds) return;
+
+        _hardwareMismatchSuggested = true; // Une seule suggestion par tentative : pas de relance toutes les 20 s.
+        SuggestHardwareMismatch();
+    }
+
+    private void ResetControllerMismatchSuggestion()
+    {
+        _anyControllerFailingSince = -1f;
+        _hardwareMismatchSuggested = false;
+    }
+
+    private void SuggestHardwareMismatch()
+    {
+        VisualElement root = UICalibrationToolkit.instance != null ? UICalibrationToolkit.instance.RootOverlay : null;
+        // Une autre décision est déjà à l'écran (écran de premier choix, etc.) : ne pas la couper.
+        if (root == null || ChoicePopup.IsOpen) return;
+
+        HardwareProfileData current = HardwareProfiles.Current;
+        ChoicePopup.Show(root, "Aucun contrôleur détecté",
+            $"Depuis {ControllerMismatchSuggestSeconds:0} secondes, rien ne répond au profil actif " +
+            $"« {current.DisplayName} ». Le matériel réellement branché est peut-être différent.",
+            new[] { "Changer de matériel" }, "Continuer d'attendre",
+            index =>
+            {
+                if (index != 0) return;
+                StartCoroutine(HardwareProfilePicker.ShowChangeMenu(root, OnHardwareProfileChangedFromCalibration));
+            });
     }
 
     private void Update()
@@ -310,7 +509,9 @@ public class CalibrationManager : MonoBehaviour
 
                 if (UICalibrationToolkit.instance != null)
                 {
-                    UICalibrationToolkit.instance.ShowPopupError("Le tracker a été perdu ou masqué. Reprise du scan dans 5 secondes...");
+                    UICalibrationToolkit.instance.ShowPopupError(
+                        $"Suivi de {HardwareProfiles.Current.DeviceNoun} perdu : " +
+                        $"{HardwareProfiles.Current.TrackingHint}. Reprise du scan dans 5 secondes...");
                 }
                 
                 StartCoroutine(HandleTrackingLossRoutine());
@@ -322,14 +523,36 @@ public class CalibrationManager : MonoBehaviour
 
     public virtual void Init()
     {
+        MooveoConfigManager.EndMouseTest();
+        // AVANT la calibration : les bordures de HotFolder portent un identifiant propre à chaque
+        // poste, les réglages livrés sont donc toujours faux ailleurs qu'ici.
+        HotFolderLocator.ApplyTo(GlobalSettings.Core.GlobalSettings.Instance);
+        // Les gabarits à importer dans HotFolderPrint sont écrits d'office, sans attendre qu'un
+        // défaut soit détecté : en build, sur un poste neuf, l'opérateur doit les trouver dans
+        // Import/HotFolder même s'il n'a jamais ouvert le menu d'impression.
+        HotFolderBannerTemplate.EnsureAll();
+        // ⚠ Plus de popup dédiée ICI : la bannière est devenue une vérification comme les autres,
+        // et c'est le bilan de fin de campagne qui l'annonce, avec sa procédure illustrée. Deux
+        // popups qui s'enchaînent, l'une remplaçant l'autre, ne s'expliquaient pas.
+
+        // ⚠ AVANT le système de vérifications (issue #71) : celles-ci dépendent du profil matériel
+        // (HardwareChecks, calibration…) — les lancer sans profil choisi les ferait courir sur un
+        // défaut provisoire. Rend immédiatement la main si un choix est déjà mémorisé.
+        StartCoroutine(HardwareProfilePicker.ShowIfNeeded(
+            () => UICalibrationToolkit.instance != null ? UICalibrationToolkit.instance.RootOverlay : null,
+            ContinueInitAfterHardwareChoice));
+    }
+
+    private void ContinueInitAfterHardwareChoice()
+    {
         _needCalibration = DoesNeedCalibration();
         InitCheckers();
         OnInitDevicesUI?.Invoke(_devicesToCheck);
-        
+
         // On stoppe l'ancienne boucle si elle tournait encore avant d'en relancer une
         if (_checkDevicesRoutine != null) StopCoroutine(_checkDevicesRoutine);
         _checkDevicesRoutine = StartCoroutine(CheckDevicesLogicLoop());
-        
+
         _config = MooveoConfigManager.Load();
 
         if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
@@ -379,6 +602,17 @@ public class CalibrationManager : MonoBehaviour
             UICalibrationToolkit.instance.StartMainFlow(_nPointsToCalibrate);
         }
     }
+
+    public bool CanStartMouseTest => _devicesChecked && GlobalSettings.Core.GlobalSettings.Instance != null &&
+                                     GlobalSettings.Core.GlobalSettings.Instance.Admin.Value;
+
+    public void StartMouseTest()
+    {
+        if (!CanStartMouseTest || ModalPopups.IsOpen) return;
+        MooveoConfigManager.BeginMouseTest();
+        Debug.Log("[CalibrationManager] Ouverture du mur de test à la souris (calibration temporaire).");
+        LaunchScene();
+    }
     
     public bool AreControllersConnected()
     {
@@ -401,6 +635,25 @@ public class CalibrationManager : MonoBehaviour
     private void InitCheckers()
     {
         _activeCheckers.Clear();
+        // Sondages en cours rattachés à d'anciennes configs : sans intérêt sur une nouvelle
+        // campagne, on repart propre plutôt que de laisser une clé morte s'accumuler.
+        _asyncPolls.Clear();
+
+        // Ajouté par code : la ligne doit exister sur toutes les scènes de calibration, sans
+        // avoir à rouvrir chacune pour la câbler à la main.
+        if (!_devicesToCheck.Any(c => c.Type == EDeviceCheckerType.HotFolderBanner))
+        {
+            _devicesToCheck.Add(new DeviceCheckerConfig
+            {
+                Key = "hotfolder-banner",
+                Label = "Bordures d'impression",
+                Type = EDeviceCheckerType.HotFolderBanner,
+                Optional = true
+            });
+        }
+
+        InjectSystemCheckRows();
+
         foreach (var config in _devicesToCheck)
         {
             IDeviceChecker checker = null;
@@ -413,11 +666,56 @@ public class CalibrationManager : MonoBehaviour
                 case EDeviceCheckerType.AnyController: checker = new AnyControllerChecker(); break;
                 case EDeviceCheckerType.SteamVR: checker = new SteamVRChecker(); break;
                 case EDeviceCheckerType.EosUtility: checker = new EosUtilitychecker(); break;
+#if UNITY_EDITOR
+                // Simulation de blocage : jamais en build, où elle retiendrait le démarrage.
+                case EDeviceCheckerType.HotFolder: checker = new HotFolderChecker(_debugHotFolderHangSeconds); break;
+#else
                 case EDeviceCheckerType.HotFolder: checker = new HotFolderChecker(); break;
+#endif
+                case EDeviceCheckerType.HotFolderBanner: checker = new HotFolderBannerChecker(); break;
+                // La clé EST le nom de la vérification : c'est ce qui relie la ligne au verdict.
+                case EDeviceCheckerType.SystemCheck: checker = new SystemCheckRow(config.Key); break;
             }
             if (checker != null) _activeCheckers.Add(config, checker);
         }
     }
+    /// <summary>
+    /// Ajoute une ligne par vérification de portée Calibration, et lance la campagne qui les
+    /// alimente. Par CODE et non dans l'inspecteur : ajouter une vérification ne doit demander
+    /// d'ouvrir aucune scène, et la liste doit être la même partout.
+    /// </summary>
+    private void InjectSystemCheckRows()
+    {
+        _devicesToCheck.RemoveAll(c => c != null && c.Type == EDeviceCheckerType.SystemCheck);
+
+        // ⚠ Passe COURTE dès qu'une campagne complète a déjà tourné dans la session : venir
+        // calibrer depuis GraffWall rejouait vingt vérifications déjà faites, une seconde chacune.
+        // Seules les indispensables sont rejouées, les autres gardent leur verdict. Première
+        // campagne de la session : passe complète, sinon rien ne serait vérifié du tout.
+        bool essentialOnly = SystemStatus.HasRun;
+
+        foreach (string name in SystemCheckRunner.NamesInScope(CheckScope.Calibration, essentialOnly))
+        {
+            // Déjà couverte par une ligne native de la scène (« SteamVR ») : deux lignes de même clé
+            // se disputeraient le même élément d'interface.
+            if (_devicesToCheck.Any(c => c != null &&
+                    (string.Equals(c.Key, name, StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(c.Label, name, StringComparison.OrdinalIgnoreCase))))
+                continue;
+
+            _devicesToCheck.Add(new DeviceCheckerConfig
+            {
+                Key = name,
+                Label = name,
+                Type = EDeviceCheckerType.SystemCheck,
+                Optional = true
+            });
+        }
+
+        // La campagne tourne en arrière-plan : les lignes affichent leur spinner puis leur verdict.
+        SystemCheckRunner.RunAll(scope: CheckScope.Calibration, essentialOnly: essentialOnly);
+    }
+
     private bool DoesNeedCalibration()
     {
         // AJOUT VITAL : Force la calibration si on a appuyé sur "Start Over" ou "Refine"
@@ -426,6 +724,14 @@ public class CalibrationManager : MonoBehaviour
         if (!MooveoConfigManager.Exists()) return true;
         _config = MooveoConfigManager.Load();
         if (_config.Points.Count <= 2) return true;
+
+        // Calibration faite avec l'autre matériel : ses points sont dans un autre univers de suivi.
+        if (!_config.MatchesCurrentHardware)
+        {
+            Debug.LogWarning($"[CalibrationManager] Calibration enregistrée avec « {_config.RecordedHardware} », " +
+                             $"profil courant « {HardwareProfiles.Current.DisplayName} » : recalibration nécessaire.");
+            return true;
+        }
 
         for (int i = 0; i < _config.Points.Count; i++)
         {
@@ -442,7 +748,103 @@ public class CalibrationManager : MonoBehaviour
         return false;
     }
     private HashSet<string> _reportedMissingFiles = new HashSet<string>();
-    
+
+    /// <summary>
+    /// État d'un <see cref="IAsyncDeviceChecker"/> — un par config, jamais deux sondages à la fois.
+    /// Le DERNIER verdict survit au sondage suivant : sans lui, la ligne retombait sur « Checking… »
+    /// à chaque relance et clignotait entre OK et « en cours ».
+    /// </summary>
+    private class AsyncCheckPoll
+    {
+        public Task<bool> Task;
+        public float StartedAt;
+        public bool HasResult;
+        public bool LastResult;
+    }
+    private readonly Dictionary<DeviceCheckerConfig, AsyncCheckPoll> _asyncPolls = new Dictionary<DeviceCheckerConfig, AsyncCheckPoll>();
+
+    /// <summary>Au-delà, une ligne encore en cours passe de « Checking… » à « pas de réponse ». Voir §13.</summary>
+    private const float StalledSeconds = 3f;
+    /// <summary>Repère de diagnostic (log seul) pour un checker qui doit rester sur le fil principal.</summary>
+    private const long MainThreadCheckerBudgetMs = 250;
+
+    /// <summary>
+    /// Point d'entrée UNIQUE pour lire l'état d'un checker dans la boucle.
+    /// ⚠ Pour un <see cref="IAsyncDeviceChecker"/>, ne BLOQUE JAMAIS le fil principal : rend le
+    /// dernier résultat connu (faux tant qu'aucun sondage n'a encore abouti) et relance un sondage
+    /// en arrière-plan dès que le précédent est terminé — jamais deux à la fois. Un sondage qui
+    /// traîne au-delà de <see cref="StalledSeconds"/> émet <see cref="OnDeviceStalled"/> : la ligne
+    /// le dit, la boucle continue les AUTRES checkers sans attendre celui-ci.
+    /// Pour un checker ordinaire, appelle `IsConnected()` tel quel (contrat : quasi instantané, cf.
+    /// `IDeviceChecker`) — seule une instrumentation de diagnostic est ajoutée.
+    /// </summary>
+    /// <param name="known">
+    /// Faux tant qu'aucun verdict n'est disponible (premier sondage en cours, ou sondage bloqué).
+    /// ⚠ L'appelant ne doit RIEN décider sur un verdict inconnu : « pas encore répondu » n'est pas
+    /// « pas lancé » — relancer l'exe là-dessus ouvrirait le logiciel à chaque passage de la boucle.
+    /// </param>
+    private bool ResolveConnected(DeviceCheckerConfig config, IDeviceChecker checker, out bool stalled, out bool known)
+    {
+        stalled = false;
+        known = true;
+
+        if (!(checker is IAsyncDeviceChecker asyncChecker))
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            bool result = checker.IsConnected();
+            watch.Stop();
+            if (watch.ElapsedMilliseconds > MainThreadCheckerBudgetMs)
+                Debug.LogWarning($"[CalibrationManager] « {config.Label} » : IsConnected() a mis " +
+                    $"{watch.ElapsedMilliseconds} ms sur le fil principal (contrat : quasi instantané). " +
+                    "S'il peut attendre du matériel/OS, il doit implémenter IAsyncDeviceChecker.");
+            return result;
+        }
+
+        if (!_asyncPolls.TryGetValue(config, out AsyncCheckPoll poll))
+        {
+            poll = new AsyncCheckPoll();
+            _asyncPolls[config] = poll;
+        }
+
+        // Sondage terminé : on récolte son verdict.
+        if (poll.Task != null && poll.Task.IsCompleted)
+        {
+            if (poll.Task.Status == TaskStatus.RanToCompletion)
+            {
+                poll.LastResult = poll.Task.Result;
+                poll.HasResult = true;
+            }
+            else
+            {
+                // Un sondage qui lève n'est pas un logiciel absent : on garde le verdict précédent.
+                Debug.LogWarning($"[CalibrationManager] « {config.Label} » : sondage en échec — " +
+                    $"{poll.Task.Exception?.GetBaseException().Message}");
+            }
+            poll.Task = null;
+        }
+
+        // Aucun sondage en vol : on en relance un pour la prochaine lecture, SANS jamais l'attendre
+        // — c'est ce qui empêche un scan lent de retenir la frame.
+        if (poll.Task == null)
+        {
+            poll.Task = asyncChecker.IsConnectedAsync();
+            poll.StartedAt = Time.realtimeSinceStartup;
+        }
+
+        float elapsed = Time.realtimeSinceStartup - poll.StartedAt;
+        if (elapsed >= StalledSeconds)
+        {
+            // Plus confirmé depuis trop longtemps : même un ancien « OK » ne vaut plus.
+            stalled = true;
+            known = false;
+            OnDeviceStalled?.Invoke(config.Key, config.Label, elapsed);
+            return false;
+        }
+
+        known = poll.HasResult;
+        return poll.LastResult;
+    }
+
     private IEnumerator CheckDevicesLogicLoop()
     {
         if (GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Admin.Value)
@@ -465,11 +867,51 @@ public class CalibrationManager : MonoBehaviour
             {
                 var config = kvp.Key;
                 var checker = kvp.Value;
-                
-                bool isConnected = checker.IsConnected();
+
+                // ⚠ Jamais checker.IsConnected() en direct ici : ResolveConnected() est le seul
+                // point qui sait dérouter un IAsyncDeviceChecker hors du fil principal, pour que ce
+                // checker-là ne fige jamais la mise à jour des AUTRES lignes (cf. §13).
+                bool isConnected = ResolveConnected(config, checker, out bool stalled, out bool known);
                 string exePath = "";
 
-                if (!isConnected && config.RequiresExe)
+                // Contrôle informatif : on l'affiche en avertissement et on passe. Bloquer ici
+                // interdirait de peindre sur un poste sans imprimante.
+                // ⚠ Le checker fait FOI : la case Optional de la scène ne peut que s'ajouter, pas
+                // retirer. Elle avait été oubliée sur la ligne des bordures, et le contrôle bloquait
+                // la calibration en boucle au lieu d'afficher son avertissement.
+                IOptionalDeviceChecker optional = checker as IOptionalDeviceChecker;
+                if (optional != null || config.Optional)
+                {
+                    // ⚠ TROIS états, pas deux. Sans l'état « en attente », une vérification
+                    // asynchrone encore en cours s'afficherait en avertissement avant même d'avoir
+                    // rendu son verdict — on accuserait un serveur qui répond très bien.
+                    // ⚠ Un checker STALLED (sondage IAsyncDeviceChecker qui traîne) ne repasse PAS
+                    // par ces branches : ResolveConnected vient d'émettre OnDeviceStalled, un
+                    // « Checking… »/« indisponible » à la ligne suivante l'écraserait aussitôt.
+                    if (stalled) { }
+                    else if (isConnected) OnUpdateDeviceUI?.Invoke(config.Key, config.Label, true, "");
+                    else if (optional != null && optional.Pending)
+                        OnUpdateDeviceUI?.Invoke(config.Key, config.Label, false, "");
+                    else OnDeviceWarning?.Invoke(config.Key, config.Label,
+                             optional != null ? optional.Warning : "indisponible",
+                             optional != null && optional.IsError);
+
+                    // ⚠ Un contrôle informatif ne BLOQUE pas sur un avertissement, mais on attend son
+                    // VERDICT : sans ça, « Appuyer sur la gâchette » s'affichait — et la gâchette
+                    // passait à la suite — alors que la moitié de la liste tournait encore.
+                    if (!isConnected && optional != null && optional.Pending) allDevicesValid = false;
+
+                    // ⚠ Cadence COURTE. Ces lignes sont nombreuses (une par vérification système) :
+                    // à une demi-seconde chacune, la boucle mettait une dizaine de secondes à
+                    // revenir sur les contrôles BLOQUANTS, et une manette rebranchée n'était vue
+                    // qu'au tour suivant. Le rythme d'affichage vient de la campagne, pas d'ici.
+                    yield return new WaitForSeconds(0.1f);
+                    continue;
+                }
+
+                // ⚠ `known` : sur un sondage encore sans verdict, « faux » veut dire « on ne sait
+                // pas », pas « logiciel fermé » — relancer l'exe ici l'ouvrirait à chaque passage.
+                if (!isConnected && known && config.RequiresExe)
                 {
                     exePath = GetExePathForType(config.Type);
                     if (!string.IsNullOrEmpty(exePath))
@@ -503,11 +945,22 @@ public class CalibrationManager : MonoBehaviour
                     }
                 }
 
-                OnUpdateDeviceUI?.Invoke(config.Key, config.Label, isConnected, exePath);
+                // ⚠ Pas de « Checking… » ici si ResolveConnected vient d'annoncer un sondage
+                // bloqué : OnDeviceStalled l'a déjà dit sur cette même ligne, l'écraser aussitôt
+                // ferait disparaître le signal avant que l'opérateur ait pu le lire.
+                if (!stalled) OnUpdateDeviceUI?.Invoke(config.Key, config.Label, isConnected, exePath);
 
                 if (!isConnected) allDevicesValid = false;
 
-                yield return new WaitForSeconds(0.5f); 
+                // ⚠ AnyController introuvable après 20 s : c'est le symptôme d'un profil matériel qui
+                // ne correspond pas à ce qui est branché (vécu le 29/09/2026, cf. §14 de CLAUDE.md) —
+                // SteamVR, configuré pour l'AUTRE profil, ne fournit alors aucun rôle de contrôleur.
+                // Le bouton « Matériel » (toujours visible) reste la vraie échappatoire ; ceci ne fait
+                // que la SUGGÉRER, pour ne pas laisser deviner pourquoi rien ne se passe.
+                if (config.Type == EDeviceCheckerType.AnyController) TrackControllerMismatchSuggestion(isConnected);
+
+                // Contrôle BLOQUANT : c'est lui qui retient le démarrage, on le rafraîchit vite.
+                yield return new WaitForSeconds(0.1f);
             }
 
             if (!allDevicesValid) yield return new WaitForSeconds(1f);
@@ -600,6 +1053,10 @@ public class CalibrationManager : MonoBehaviour
 
     }
 
+    // "Valider" / "Lancer" : persiste la calibration puis charge GraffWall. La SÉLECTION DE MODE
+    // DE JEU n'est PLUS affichée dans la scène de calibration (le scroll de la scrollview ne s'y
+    // comportait pas comme en jeu) : elle est ouverte DANS GraffWall si aucun mode n'est déjà
+    // choisi (GameModeSelection.PendingMode == null), cf. GlobalWorldUI.ApplyPendingModeWhenReady.
     [ContextMenu("Launch Game")]
     public void Launch()
     {
@@ -607,12 +1064,17 @@ public class CalibrationManager : MonoBehaviour
         if(_calibrated)SaveConfig();
         if (!MooveoConfigManager.Exists())
         {
-            if (_debug) Debug.LogError("CALIBRATION : Le fichier n'a pas été sauvegardé, LoadScene annulé.");
+            if (_debug) Debug.LogError("CALIBRATION : Le fichier n'a pas été sauvegardé, lancement annulé.");
             return;
         }
 
-        ClearTestCalibration(false);
+        LaunchScene();
+    }
 
+    /// <summary>Charge la scène GraffWall.</summary>
+    public void LaunchScene()
+    {
+        ClearTestCalibration(false);
         SceneManager.LoadScene(_sceneName);
     }
 
@@ -630,11 +1092,12 @@ public class CalibrationManager : MonoBehaviour
 
     public void SaveConfig()
     {
+        // Réduits à 3 points par `MooveoConfigManager.Save` (moyenne par colonne d'un affinage).
         _config.Points = new List<Vector3>(_points);
         _config.Normals = new List<Vector3>(_normals);
         MooveoConfigManager.Save(_config);
     }
-    
+
     public void TestCalibrationSetupPlayArea()
     {
         if (_points.Count < 3)
@@ -642,10 +1105,13 @@ public class CalibrationManager : MonoBehaviour
             if (_debug) Debug.LogWarning("Pas assez de points pour calibrer le mur.");
             return;
         }
-        
-        Vector3 center = CalculateCenter(_points, out int centerIndex);
+
+        // ⚠ Aperçu sur les points RÉDUITS, comme ce qui sera persisté puis relu par GraffWall :
+        // sur les neuf points bruts d'un affinage, l'aperçu montrait la seule ligne du milieu.
+        List<Vector3> points = MooveoConfig.ReducePoints(_points);
+        Vector3 center = CalculateCenter(points, out int centerIndex);
         if (_debug) Debug.Log($"Center is {center}");
-        (Vector3 left, Vector3 right) = CalculateLeftAndRight(_points, centerIndex);
+        (Vector3 left, Vector3 right) = CalculateLeftAndRight(points, centerIndex);
 
         float width = Vector3.Distance(left, right) * 2f;
         
@@ -760,7 +1226,11 @@ public class CalibrationManager : MonoBehaviour
             OnUpdatePoint?.Invoke(elapsedTime / _posAnalysisTime);
             elapsedTime += Time.deltaTime;
             averagePosition += controllerTransform.position;
-            averageForward += controllerTransform.up;
+            // Axe du PROFIL : Up pour un tracker plaqué au mur, Forward pour une manette pointée vers
+            // l'écran. Il décide du sens du mur dans le jeu (CalibrationGraffWall.SetupPlayArea).
+            averageForward += HardwareProfiles.Current.CalibrationNormalAxis == CalibrationAxis.Forward
+                ? controllerTransform.forward
+                : controllerTransform.up;
             counter++;
             previousPos = controllerTransform.position;
             if(_debugSlider != null) _debugSlider.value = elapsedTime / _posAnalysisTime;
@@ -794,29 +1264,13 @@ public class CalibrationManager : MonoBehaviour
             yield break;
         }
 
-        Vector3 p1, p2, p3;
-        List<Vector3> normalsToTest;
-
-        // Si on est en Refine (9 points), on groupe par colonnes (Gauche, Centre, Droite) 
-        // pour créer un axe horizontal parfait à partir des 3 lignes scannées.
-        if (_currentState == EState.RefineCalibration && _points.Count >= 9)
-        {
-            p1 = (_points[0] + _points[3] + _points[6]) / 3f; // Moyenne Colonne Gauche
-            p2 = (_points[1] + _points[4] + _points[7]) / 3f; // Moyenne Colonne Centre
-            p3 = (_points[2] + _points[5] + _points[8]) / 3f; // Moyenne Colonne Droite
-
-            Vector3 n1 = (_normals[0] + _normals[3] + _normals[6]).normalized;
-            Vector3 n2 = (_normals[1] + _normals[4] + _normals[7]).normalized;
-            Vector3 n3 = (_normals[2] + _normals[5] + _normals[8]).normalized;
-            normalsToTest = new List<Vector3> { n1, n2, n3 };
-        }
-        else // Cas standard (FirstCalibration à 3 points)
-        {
-            p1 = _points[0];
-            p2 = _points[1];
-            p3 = _points[2];
-            normalsToTest = _normals;
-        }
+        // Affinage (9 points) : groupés par colonnes (Gauche, Centre, Droite) pour un axe
+        // horizontal moyenné sur les 3 lignes scannées. MÊME réduction que l'aperçu et le fichier
+        // (`MooveoConfig.ReducePoints`) : ce qui est validé ici est exactement ce qui sera persisté.
+        // Un premier calibrage à 3 points ressort inchangé.
+        List<Vector3> reducedPoints = MooveoConfig.ReducePoints(_points);
+        List<Vector3> normalsToTest = MooveoConfig.ReduceNormals(_normals);
+        Vector3 p1 = reducedPoints[0], p2 = reducedPoints[1], p3 = reducedPoints[2];
 
         float totalWidth = Vector3.Distance(p1, p3);
 
@@ -936,10 +1390,11 @@ public class CalibrationManager : MonoBehaviour
         _devicesChecked = false;
         _needCalibration = needCalibration;
         _handleClick = false;
-        
+        ResetControllerMismatchSuggestion(); // Nouvelle tentative : le silence précédent ne vaut plus.
+
         // CORRECTION : Réinitialisation de l'état de calibration
-        _currentState = EState.None; 
-        
+        _currentState = EState.None;
+
         _points.Clear();
         _normals.Clear();
 
@@ -960,6 +1415,9 @@ public class CalibrationManager : MonoBehaviour
 
     private void SpawnAdminTester()
     {
+        // Tracker-only scenes do not have a hand-controller prefab. Their mouse entry
+        // point is the explicit test-wall button, independent of a simulated XR device.
+        if (_testerPrefab == null || _adminTester != null) return;
         GameObject instance = Instantiate(_testerPrefab);
         instance.name = "Tester_Admin_FakeController";
         
@@ -978,20 +1436,21 @@ public class CalibrationManager : MonoBehaviour
             return points[1];
         }
         
-        Vector3 avg = (_points[0] + _points[1] + _points[2]) / 3f;
-        
+        // Le PARAMÈTRE, pas le champ `_points` : l'aperçu passe une liste réduite.
+        Vector3 avg = (points[0] + points[1] + points[2]) / 3f;
+
         centerIndex = 0;
-        float minDist = Vector3.Distance(_points[0], avg);
+        float minDist = Vector3.Distance(points[0], avg);
         for (int i = 1; i < 3; i++)
         {
-            float d = Vector3.Distance(_points[i], avg);
+            float d = Vector3.Distance(points[i], avg);
             if (d < minDist)
             {
                 minDist = d;
                 centerIndex = i;
             }
         }
-        return _points[centerIndex];
+        return points[centerIndex];
     }
 
     private (Vector3 left, Vector3 right) CalculateLeftAndRight(List<Vector3> points, int centerIndex)

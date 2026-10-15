@@ -91,7 +91,18 @@ public class CursorInteractor : MonoBehaviour
         
         bool hitUIToolkit = false;
         
-        if (_interactionMode == UIInteractionMode.PhysicsRaycast3D)
+        // ⚠ Panneaux en SCREEN SPACE d'abord (notifications) : ils n'ont pas de collider, le rayon
+        // physique ne peut pas les trouver. Sans ce passage, leurs boutons seraient cliquables à la
+        // souris mais invisibles pour la bombe — or une erreur doit pouvoir se fermer au spray.
+        if (ScreenSpaceUI.TryPick(screenPos, out UIDocument screenDoc, out VisualElement screenElement,
+                                  out Vector2 screenPanelPos))
+        {
+            hitUIToolkit = true;
+            newTarget = screenDoc.gameObject;
+            firstResult.gameObject = newTarget;
+            ApplyPicked(screenElement, screenPanelPos);
+        }
+        else if (_interactionMode == UIInteractionMode.PhysicsRaycast3D)
         {
             Ray ray = _camera.ScreenPointToRay(screenPos);
             // EXPLICITLY target Layer 5 (UI) or the defined interactable mask
@@ -330,7 +341,7 @@ public class CursorInteractor : MonoBehaviour
             {
                 Vector3 localHit = uiDoc.transform.InverseTransformPoint(physicsHit.Value.point);
                 panelPos = new Vector2(localHit.x, localHit.y);
-                picked = uiDoc.rootVisualElement.panel.Pick(panelPos);
+                picked = WorldPanelUtils.PickAt(uiDoc.rootVisualElement.panel, panelPos);
             }
             else
             {
@@ -339,59 +350,49 @@ public class CursorInteractor : MonoBehaviour
                 //picked = uiDoc.rootVisualElement.panel.Pick(panelPos);
             }
             
-            if (picked != null)
-            {
-                if (_debug) Debug.Log($"<color=cyan>[CursorInteractor]</color> UI Element Picked: '{picked.name}' (Type: {picked.GetType().Name}) at panel position {panelPos}");
-                
-                var originalPicked = picked;
-                picked = GetInteractiveParent(picked); // recupere le premier obj interactif en parent
-                
-                if (originalPicked != picked)
-                {
-                    if (_debug) Debug.Log($"<color=cyan>[CursorInteractor]</color> UI Redirected: '{originalPicked.name}' -> Parent '{picked.name}'");
-                }
-            }
-            else
-            {
-                if (Time.frameCount % 10 == 0) // avoid flood but keep informed
-                {
-                    if (_debug) Debug.LogWarning($"<color=yellow>[CursorInteractor]</color> Hit UIDocument panel, but UI Toolkit Pick() returned NULL at local panel pos: {panelPos}");
-                }
-            }
-            
-            // Store Aligned Position for Events
-            _alignedPointerPos = panelPos;
+            if (picked == null && _debug && Time.frameCount % 10 == 0)
+                Debug.LogWarning($"<color=yellow>[CursorInteractor]</color> Hit UIDocument panel, but UI Toolkit Pick() returned NULL at local panel pos: {panelPos}");
 
-            if (picked != _currentVisualElement)
-            {
-                if(picked != null)
-                {
-                    string elementName = string.IsNullOrEmpty(picked.name) ? "Élément_Sans_Nom" : picked.name;
-                    if (_debug) Debug.Log($"<color=green>[CursorInteractor]</color> Hover Enter: <b>{elementName}</b> <i>({picked.GetType().Name})</i>");
-                }
-                else if (_currentVisualElement != null)
-                {
-                    if (_debug) Debug.Log($"<color=grey>[CursorInteractor]</color> Hover Exit from: {_currentVisualElement.name}");
-                }
-                if (_currentVisualElement != null)
-                    UsingUIToolkitPointerEvent(PointerLeaveEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
-                
-                _currentVisualElement = picked;
-                IsHoveringUI = IsValidUIElement(_currentVisualElement);
-                
-                if (_currentVisualElement != null)
-                    UsingUIToolkitPointerEvent(PointerEnterEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
-            }
-            
-            if (_currentVisualElement != null)
-            {
-                 UsingUIToolkitPointerEvent(PointerMoveEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
-            }
+            ApplyPicked(picked, panelPos);
         }
         catch (System.Exception e)
         {
             if (_debug) Debug.LogError($"CRASH in HandleUI: {e.Message}\n{e.StackTrace}");
         }
+    }
+
+    /// <summary>
+    /// Survol et position, une fois l'élément trouvé — que ce soit par raycast physique (panneau du
+    /// monde) ou par pointage écran (<see cref="ScreenSpaceUI"/>). Les deux chemins doivent produire
+    /// exactement les mêmes événements, sinon le survol clignote en passant de l'un à l'autre.
+    /// </summary>
+    private void ApplyPicked(VisualElement picked, Vector2 panelPos)
+    {
+        if (picked != null)
+        {
+            var originalPicked = picked;
+            picked = GetInteractiveParent(picked);   // premier objet interactif en parent
+
+            if (_debug && originalPicked != picked)
+                Debug.Log($"<color=cyan>[CursorInteractor]</color> UI Redirected: '{originalPicked.name}' -> '{picked.name}'");
+        }
+
+        _alignedPointerPos = panelPos;
+
+        if (picked != _currentVisualElement)
+        {
+            if (_currentVisualElement != null)
+                UsingUIToolkitPointerEvent(PointerLeaveEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
+
+            _currentVisualElement = picked;
+            IsHoveringUI = WorldPanelUtils.IsInteractiveUIElement(_currentVisualElement);
+
+            if (_currentVisualElement != null)
+                UsingUIToolkitPointerEvent(PointerEnterEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
+        }
+
+        if (_currentVisualElement != null)
+            UsingUIToolkitPointerEvent(PointerMoveEvent.GetPooled(), _currentVisualElement, _alignedPointerPos, _pointer.delta);
     }
 
     // Reflection Cache to avoid lookup cost every frame
@@ -428,7 +429,8 @@ public class CursorInteractor : MonoBehaviour
         //    UserUI.Instance.PushInteractingPlayer(PlayerID);
         //}
         
-        target.SendEvent(evt);
+        try { target?.SendEvent(evt); }
+        finally { evt.Dispose(); }
 
         // Nettoyage de la file si l'événement n'a pas été consommé (par ex: clic dans le vide)
         //if (UserUI.Instance != null)
@@ -472,29 +474,6 @@ public class CursorInteractor : MonoBehaviour
         });
     }
     
-    private bool IsValidUIElement(VisualElement element)
-    {
-        if (element == null) return false;
-        
-        VisualElement current = element;
-        while (current != null)
-        {
-            if (current is Button || current is RadioButton || current is Toggle || current is Scroller || current is Slider) return true;
-            
-            if (current.ClassListContains("feature-window")) return true;
-            
-            if (current.name == "sidebar-container" || 
-                current.name == "toolbar-unified" || 
-                current.name == "drag-handle" || 
-                current.name == "tooltip-container") 
-            {
-                return true;
-            }
-            
-            current = current.parent;
-        }
-        return false;
-    }
 
     private VisualElement GetInteractiveParent(VisualElement element)
     {
