@@ -97,7 +97,7 @@ public class BannerTemplatesCheck : SyncSystemCheck
         if (landscape && portrait) return CheckResult.Ok(folder);
 
         return CheckResult.Warning($"Gabarit(s) à importer absent(s) de :\n{folder}",
-                                   "GraffWall n'a pas pu les écrire ; vérifiez les droits sur ce dossier.")
+                                   MooveoGameHooks.AppName + " n'a pas pu les écrire ; vérifiez les droits sur ce dossier.")
                           .With(new ActionRepair("Réécrire les gabarits", Rewrite));
     }
 

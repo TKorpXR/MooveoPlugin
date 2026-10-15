@@ -742,7 +742,7 @@ public static class SystemStatusPanel
             guide.RegisterCallback<ClickEvent>(e =>
             {
                 Close();
-                UIManager.Instance?.ShowGuidePopup(guideId);
+                MooveoGameHooks.ShowGuide(guideId);
             });
             actions.Add(guide);
         }

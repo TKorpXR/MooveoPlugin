@@ -359,7 +359,7 @@ public class SystemCheckRunner : MonoBehaviour
             {
                 actionLabel = "Voir la procédure";
                 string guideId = r.GuideId;
-                action = () => UIManager.Instance?.ShowGuidePopup(guideId);
+                action = () => MooveoGameHooks.ShowGuide(guideId);
             }
 
             // La CLÉ évite d'empiler la même carte à chaque relance de la campagne.

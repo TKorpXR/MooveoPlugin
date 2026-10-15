@@ -175,7 +175,7 @@ public class NotificationHost : MonoBehaviour
     /// <summary>Au-delà, on arrête de dessiner : quatre bombes, quelques images chacune.</summary>
     private const int MaxEchoes = 16;
 
-    private readonly List<SprayCursorUI.CursorLayer> _cursorLayers = new List<SprayCursorUI.CursorLayer>();
+    private readonly List<MooveoGameHooks.ScreenCursorLayer> _cursorLayers = new List<MooveoGameHooks.ScreenCursorLayer>();
 
     /// <summary>
     /// Redessine chaque curseur spray qui passe SUR une carte, image par image : sa place, sa
@@ -199,15 +199,15 @@ public class NotificationHost : MonoBehaviour
         IPanel panel = _document != null && _document.rootVisualElement != null
             ? _document.rootVisualElement.panel : null;
 
-        if (_cursorLayer != null && panel != null && _cards.Count > 0 && UIManager.Instance != null)
+        if (_cursorLayer != null && panel != null && _cards.Count > 0 && MooveoGameHooks.ScreenCursors.Count > 0)
         {
             Camera cam = ScreenSpaceUI.DisplayCamera();
-            IReadOnlyList<SprayCursorUI> cursors = UIManager.Instance.Cursors;
+            List<MooveoGameHooks.IScreenCursor> cursors = MooveoGameHooks.ScreenCursors;
 
             for (int i = 0; cam != null && i < cursors.Count && used < MaxEchoes; i++)
             {
-                SprayCursorUI cursor = cursors[i];
-                if (cursor == null || !cursor.isActiveAndEnabled) continue;
+                MooveoGameHooks.IScreenCursor cursor = cursors[i];
+                if (!MooveoGameHooks.IsAlive(cursor) || !cursor.isActiveAndEnabled) continue;
                 if (cursor.CollectScreenLayers(cam, _cursorLayers) == 0) continue;
 
                 // L'ensemble du curseur décide : une seule de ses images touchant une carte suffit,
@@ -249,7 +249,7 @@ public class NotificationHost : MonoBehaviour
         => Rect.MinMaxRect(Mathf.Min(a.xMin, b.xMin), Mathf.Min(a.yMin, b.yMin),
                            Mathf.Max(a.xMax, b.xMax), Mathf.Max(a.yMax, b.yMax));
 
-    private void DrawEcho(int index, Rect inPanel, SprayCursorUI.CursorLayer layer)
+    private void DrawEcho(int index, Rect inPanel, MooveoGameHooks.ScreenCursorLayer layer)
     {
         while (_cursorEchoes.Count <= index)
         {
@@ -473,7 +473,7 @@ public class NotificationHost : MonoBehaviour
             {
                 // La carte s'en va : la réparation prend la main, et le verdict qui suit
                 // (RunOnly, systématique même si l'opérateur annule) réannonce ce qui reste.
-                if (UIManager.Instance != null && UIManager.Instance.ResolveCheck(report))
+                if (MooveoGameHooks.ResolveCheck(report))
                     NotificationCenter.Dismiss(notification);
             });
             actions.Add(resolve);

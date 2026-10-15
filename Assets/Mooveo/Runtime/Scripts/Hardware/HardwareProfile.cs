@@ -142,9 +142,9 @@ public sealed class HardwareProfileData
 /// </summary>
 public static class HardwareProfiles
 {
-    public const string EditorPrefsKey = "GraffWall.HardwareProfile";
+    public const string EditorPrefsKey = "Mooveo.HardwareProfile";
     public const string BakedResourceName = "HardwareProfileBaked";
-    public const string CommandLineArgument = "-graffwall-hardware=";
+    public const string CommandLineArgument = "-mooveo-hardware=";
 
     // Masques OpenVR (EVRButtonId). Écrits en clair pour ne pas faire dépendre ce fichier du plugin.
     private const int ButtonApplicationMenu = 1;   // k_EButton_ApplicationMenu — B / Y sur PICO

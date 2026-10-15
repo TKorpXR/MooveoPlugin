@@ -99,7 +99,7 @@ public static class WindowsDialogs
             catch (Exception e) { done.TrySetException(e); }
             finally { if (initialized) CoUninitialize(); }
         })
-        { IsBackground = true, Name = "GraffWall dialog" };
+        { IsBackground = true, Name = "Mooveo dialog" };
 
         try { thread.SetApartmentState(ApartmentState.STA); }
         catch { /* CoInitializeEx s'en charge */ }

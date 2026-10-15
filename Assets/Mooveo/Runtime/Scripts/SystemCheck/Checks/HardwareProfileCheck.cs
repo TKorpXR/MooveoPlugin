@@ -20,6 +20,6 @@ public class HardwareProfileCheck : SyncSystemCheck
 
         return CheckResult.Warning(
             $"Profil de TEST actif : {profile.DisplayName}. Ce build ne fonctionne pas avec les Vive Trackers.",
-            "Ne pas livrer. Pour la production : éditeur → GraffWall/Matériel/Vive Trackers, puis rebuilder.");
+            "Ne pas livrer. Pour la production : éditeur → Mooveo/Matériel…, puis rebuilder.");
     }
 }

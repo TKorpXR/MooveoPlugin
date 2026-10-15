@@ -59,7 +59,7 @@ public static class HotFolderSetupPopup
 
         if (result.Status == HotFolderLocator.Status.Ok)
         {
-            UIManager.Instance?.ShowToast("Bannière d'impression",
+            MooveoGameHooks.ShowToast("Bannière d'impression",
                 "Bordures détectées, la bannière s'appliquera.", UIToast.Kind.Success);
             return null;
         }

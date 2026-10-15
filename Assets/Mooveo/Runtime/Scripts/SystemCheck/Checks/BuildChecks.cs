@@ -18,19 +18,11 @@ public class RequiredShadersCheck : SyncSystemCheck
     /// aucun matériau : sans entrée dans les *Always Included Shaders*, il est stripé du build et
     /// l'effet disparaît sans la moindre erreur (CLAUDE.md §7).
     /// Liste relevée sur les `Shader.Find` du code — à tenir à jour si l'on en ajoute un.
+    ///
+    /// SDK : il n'en charge aucun. Le JEU déclare les siens au démarrage, avant la campagne de
+    /// vérifications (GraffWall : ses shaders de fresque, de cône, du mode Enfant…).
     /// </summary>
-    private static readonly string[] Required =
-    {
-        "Custom/StencilPreview",
-        "GraffWall/ConeProjectionMask",
-        "GraffWall/KidsRainbowIcon",
-        "GraffWall/TeamFrescoCrop",
-        "GraffWall/TeamFrescoVeil",
-        "GraffWall/WallObjectOverlay",
-        "Hidden/Internal-Colored",
-        "Sprites/Default",
-        "Unlit/Transparent"
-    };
+    public static readonly List<string> Required = new List<string>();
 
     public override string Category => CheckCategory.Build;
     public override string Name => "Shaders requis";
@@ -38,6 +30,8 @@ public class RequiredShadersCheck : SyncSystemCheck
 
     protected override CheckResult Evaluate()
     {
+        if (Required.Count == 0) return CheckResult.Ok("aucun shader chargé par nom");
+
         var missing = new List<string>();
         foreach (string name in Required)
             if (Shader.Find(name) == null) missing.Add(name);
@@ -48,9 +42,9 @@ public class RequiredShadersCheck : SyncSystemCheck
                                      "correspondant disparaît sans erreur.");
 
         return Application.isEditor
-            ? CheckResult.Unknown($"{Required.Length} shaders trouvés — non concluant en éditeur, " +
+            ? CheckResult.Unknown($"{Required.Count} shaders trouvés — non concluant en éditeur, " +
                                   "à revérifier dans un build.")
-            : CheckResult.Ok($"{Required.Length} shaders");
+            : CheckResult.Ok($"{Required.Count} shaders");
     }
 }
 
@@ -62,17 +56,15 @@ public class RequiredShadersCheck : SyncSystemCheck
 [Preserve]
 public class UiIconsCheck : SyncSystemCheck
 {
-    private static readonly string[] Required =
+    /// <summary>
+    /// Icônes du SDK (chargées par le code ou par ses feuilles de style). Le JEU ajoute les siennes au
+    /// démarrage (GraffWall : icônes de ses menus, <c>Icons/GraffWall/…</c>).
+    /// </summary>
+    public static readonly List<string> Required = new List<string>
     {
+        "Icons/arrow_back",
         "Icons/check",
-        "Icons/close",
-        "Icons/GraffWall/home_200dp_FFFFFF_FILL1_wght400_GRAD0_opsz48",
-        "Icons/GraffWall/settings_200dp_FFFFFF_FILL0_wght400_GRAD0_opsz48",
-        "Icons/GraffWall/menu_200dp_FFFFFF_FILL0_wght400_GRAD0_opsz48",
-        "Icons/GraffWall/print_200dp_FFFFFF_FILL0_wght400_GRAD0_opsz48",
-        "Icons/GraffWall/palette_200dp_FFFFFF_FILL0_wght400_GRAD0_opsz48",
-        "Icons/GraffWall/sticker_200dp_FFFFFF_FILL0_wght400_GRAD0_opsz48",
-        "Icons/GraffWall/wallpaper_200dp_FFFFFF_FILL0_wght400_GRAD0_opsz48"
+        "Icons/close"
     };
 
     public override string Category => CheckCategory.Build;
@@ -91,7 +83,7 @@ public class UiIconsCheck : SyncSystemCheck
                                        "Les boutons concernés s'afficheront vides.");
 
         return Application.isEditor
-            ? CheckResult.Unknown($"{Required.Length} icônes trouvées — non concluant en éditeur.")
-            : CheckResult.Ok($"{Required.Length} icônes");
+            ? CheckResult.Unknown($"{Required.Count} icônes trouvées — non concluant en éditeur.")
+            : CheckResult.Ok($"{Required.Count} icônes");
     }
 }

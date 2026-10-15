@@ -117,7 +117,7 @@ public sealed class MissingFolderRepair : ICheckRepair
     private string Message(int count)
     {
         string where = $"Réglage {_setting} :\n{(string.IsNullOrEmpty(_configured) ? "(vide)" : _configured)}";
-        if (_pickOnly) return where + "\n\nGraffWall ne peut pas écrire dans ce dossier. Choisissez-en un autre.";
+        if (_pickOnly) return where + "\n\n" + MooveoGameHooks.AppName + " ne peut pas écrire dans ce dossier. Choisissez-en un autre.";
         return count == 0
             ? where + "\n\nAucun dossier correspondant trouvé à proximité."
             : where + $"\n\n{count} dossier(s) trouvé(s) — le plus fourni en premier :";

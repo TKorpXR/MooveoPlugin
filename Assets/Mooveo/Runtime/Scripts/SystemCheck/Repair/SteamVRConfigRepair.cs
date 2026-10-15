@@ -89,7 +89,7 @@ public sealed class SteamVRConfigRepair : ICheckRepair
             yield return xr.InitializeLoader();
             ctx.EndProgress();
             if (xr.activeLoader != null) xr.StartSubsystems();
-            else ctx.Fail("SteamVR n'a pas pu être relancé par le chargeur XR. Relancez GraffWall.");
+            else ctx.Fail("SteamVR n'a pas pu être relancé par le chargeur XR. Relancez " + MooveoGameHooks.AppName + ".");
         }
         else
         {

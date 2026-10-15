@@ -537,7 +537,7 @@ public static class SteamVRConfig
         if (File.Exists(paths.ChaperoneInfo))
             File.Copy(paths.ChaperoneInfo, Path.Combine(dir, "chaperone_info.vrchap"), true);
         File.WriteAllText(Path.Combine(dir, "LISEZMOI.txt"),
-            "Sauvegarde faite par GraffWall avant de modifier la configuration SteamVR.\r\n" +
+            "Sauvegarde faite par " + MooveoGameHooks.AppName + " avant de modifier la configuration SteamVR.\r\n" +
             "Restauration (SteamVR fermé) :\r\n" +
             $"  copy steamvr.vrsettings             \"{paths.UserSettings}\"\r\n" +
             $"  copy null_driver_default.vrsettings \"{paths.NullDriverDefaults}\"\r\n" +

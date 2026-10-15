@@ -95,7 +95,7 @@ public static class HotFolderLocator
         {
             result.Status = Status.NotInstalled;
             result.Message = "HotFolderPrint est introuvable sur ce poste. Installez-le " +
-                             "(dossier habituel C:\\DNP\\HotFolderPrint), puis relancez GraffWall.";
+                             "(dossier habituel C:\\DNP\\HotFolderPrint), puis relancez " + MooveoGameHooks.AppName + ".";
             return result;
         }
 
@@ -139,7 +139,7 @@ public static class HotFolderLocator
         {
             result.Status = Status.MissingBoth;
             result.Message = "Aucune bordure 4x6 n'est importée dans HotFolderPrint. " +
-                             "Importez-en une en paysage ET une en portrait, puis relancez GraffWall.";
+                             "Importez-en une en paysage ET une en portrait, puis relancez " + MooveoGameHooks.AppName + ".";
         }
         else if (!result.HasLandscape)
         {

@@ -13,7 +13,7 @@ using UnityEngine;
 /// <see cref="Id"/> qui sert de clé) et le code le retrouve par <see cref="Find"/>. Aucun câblage
 /// de scène, aucun prefab à toucher.
 /// </summary>
-[CreateAssetMenu(fileName = "GuidePopup", menuName = "GraffWall/Popup explicative")]
+[CreateAssetMenu(fileName = "GuidePopup", menuName = "Mooveo/Popup explicative")]
 public class GuidePopupData : ScriptableObject
 {
     [Serializable]

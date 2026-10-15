@@ -254,11 +254,11 @@ public static class ErrorLogWriter
     }
 
     /// <summary>Clé EditorPrefs activant l'écriture des fichiers en éditeur.</summary>
-    public const string EditorEnabledKey = "GraffWall.ErrorLogInEditor";
+    public const string EditorEnabledKey = "Mooveo.ErrorLogInEditor";
 
-    private const string ErrorsPrefix = "GraffWall_erreurs_";
-    private const string FullPrefix = "GraffWall_complet_";
-    private const string SummaryPrefix = "GraffWall_resume_";
+    private static readonly string ErrorsPrefix = MooveoGameHooks.AppFileName + "_erreurs_";
+    private static readonly string FullPrefix = MooveoGameHooks.AppFileName + "_complet_";
+    private static readonly string SummaryPrefix = MooveoGameHooks.AppFileName + "_resume_";
     private const int RetentionDays = 30;
     private const long MaxFileBytes = 10L * 1024 * 1024;
     private const double RepeatSummarySeconds = 60.0;
@@ -577,7 +577,7 @@ public static class ErrorLogWriter
     private static string BuildSessionHeader()
     {
         string hardware = GlobalSettingsFile.Read("TrackingHardware");
-        return "===== Session {time} — GraffWall " + Application.version + " — " + SystemInfo.operatingSystem +
+        return "===== Session {time} — " + MooveoGameHooks.AppName + " " + Application.version + " — " + SystemInfo.operatingSystem +
                " — Matériel : " + (string.IsNullOrEmpty(hardware) ? "non mémorisé" : hardware) + " =====";
     }
 

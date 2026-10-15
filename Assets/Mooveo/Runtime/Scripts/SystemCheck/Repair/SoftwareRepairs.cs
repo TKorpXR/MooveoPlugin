@@ -283,7 +283,7 @@ public sealed class MissingSoftwareRepair : ICheckRepair
             }
             if (!string.IsNullOrEmpty(_software.InstallUrl))
             {
-                options.Add($"Installer {_software.Name}\nOuvre la page d'installation et réduit GraffWall");
+                options.Add($"Installer {_software.Name}\nOuvre la page d'installation et réduit {MooveoGameHooks.AppName}");
                 actions.Add(Choice.Install);
             }
 

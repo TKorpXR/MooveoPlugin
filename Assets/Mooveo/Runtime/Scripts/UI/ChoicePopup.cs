@@ -373,19 +373,30 @@ public static class ChoicePopup
 /// </summary>
 public static class ModalPopups
 {
-    public static bool IsOpen => ChoicePopup.IsOpen || GuidePopup.IsOpen || GraffWall.Remote.PairingManager.IsPairingOpen;
+    // Ordre de priorité : décision (ChoicePopup), puis modales du jeu (GraffWall : appairage
+    // Remote), puis guide illustré — cf. MooveoGameHooks.ExternalModals.
+    public static bool IsOpen => ChoicePopup.IsOpen || OpenExternal() != null || GuidePopup.IsOpen;
 
     public static void Dismiss()
     {
+        MooveoGameHooks.ExternalModal external;
         if (ChoicePopup.IsOpen) ChoicePopup.Cancel();
-        else if (GraffWall.Remote.PairingManager.IsPairingOpen) GraffWall.Remote.PairingManager.ClosePairing();
+        else if ((external = OpenExternal()) != null) external.Dismiss?.Invoke();
         else if (GuidePopup.IsOpen) GuidePopup.Dismiss();
     }
 
     public static void Confirm()
     {
+        MooveoGameHooks.ExternalModal external;
         if (ChoicePopup.IsOpen) ChoicePopup.ConfirmFirst();
-        else if (GraffWall.Remote.PairingManager.IsPairingOpen) GraffWall.Remote.PairingManager.CopyPairingCode();
+        else if ((external = OpenExternal()) != null) external.Confirm?.Invoke();
         else if (GuidePopup.IsOpen) GuidePopup.Confirm();
+    }
+
+    private static MooveoGameHooks.ExternalModal OpenExternal()
+    {
+        foreach (MooveoGameHooks.ExternalModal modal in MooveoGameHooks.ExternalModals)
+            if (modal != null && modal.IsOpen != null && modal.IsOpen()) return modal;
+        return null;
     }
 }

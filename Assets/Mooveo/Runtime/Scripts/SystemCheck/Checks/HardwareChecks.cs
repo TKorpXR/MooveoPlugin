@@ -66,7 +66,7 @@ public class SceneRigCheck : SyncSystemCheck
 
     protected override CheckResult Evaluate()
     {
-        bool wall = GameManager.instance != null && GameManager.instance.WallTransform != null;
+        bool wall = MooveoGameHooks.WallTransform == null || MooveoGameHooks.WallTransform() != null;
         bool camera = Camera.main != null || GlobalSettings.Core.GlobalSettings.MainCamera != null;
 
         if (wall && camera) return CheckResult.Ok();

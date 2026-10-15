@@ -18,7 +18,7 @@ public static class PathChecks
         try
         {
             if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-            string probe = Path.Combine(folder, ".graffwall_write_test");
+            string probe = Path.Combine(folder, ".mooveo_write_test");
             File.WriteAllText(probe, "ok");
             File.Delete(probe);
             return null;

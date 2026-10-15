@@ -34,8 +34,8 @@ public class MouseUIBridge : MonoBehaviour
     private VisualElement _pressed;
     // Repli du PointerUp si l'élément pressé a été détruit.
     private VisualElement _pressedRoot;
-    private UserUI _hoveredUserUI;
-    private UserUI _pressedUserUI;
+    private MooveoGameHooks.IPlayerOwnedPanel _hoveredUserUI;
+    private MooveoGameHooks.IPlayerOwnedPanel _pressedUserUI;
     private Vector2 _lastScreen;
     private Vector2 _panelPosition;
     private bool _wasPressed;
@@ -144,8 +144,8 @@ public class MouseUIBridge : MonoBehaviour
 
     private void PrepareUserInteraction()
     {
-        if (_pressedUserUI == null) return;
-        int playerID = AdminMouseSpray.MousePlayerID;
+        if (!MooveoGameHooks.IsAlive(_pressedUserUI)) return;
+        int playerID = MooveoGameHooks.MousePlayerID != null ? MooveoGameHooks.MousePlayerID() : -1;
         _pressedUserUI.PushInteractingPlayer(playerID >= 0 ? playerID : _pressedUserUI.OwnerID);
     }
 
@@ -182,7 +182,7 @@ public class MouseUIBridge : MonoBehaviour
             // curseur spray — ou sur le voile d'une modale, qui doit justement bloquer.
             if (hit == null || !(WorldPanelUtils.IsInteractiveUIElement(hit) || InModalOverlay(hit))) continue;
             panelPosition = position;
-            _hoveredUserUI = doc.GetComponentInParent<UserUI>();
+            _hoveredUserUI = doc.GetComponentInParent<MooveoGameHooks.IPlayerOwnedPanel>();
             return Interactive(hit);
         }
 
@@ -210,7 +210,7 @@ public class MouseUIBridge : MonoBehaviour
             if (picked == null || !(WorldPanelUtils.IsInteractiveUIElement(picked) || InModalOverlay(picked))) continue;
 
             panelPosition = position;
-            _hoveredUserUI = worldDoc.GetComponentInParent<UserUI>();
+            _hoveredUserUI = worldDoc.GetComponentInParent<MooveoGameHooks.IPlayerOwnedPanel>();
             return Interactive(picked);
         }
 

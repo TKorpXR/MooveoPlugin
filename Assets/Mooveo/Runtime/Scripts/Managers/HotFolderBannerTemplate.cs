@@ -12,8 +12,8 @@ using UnityEngine;
 /// </summary>
 public static class HotFolderBannerTemplate
 {
-    public const string LandscapeFileName = "GraffWall_bordure_paysage.png";
-    public const string PortraitFileName = "GraffWall_bordure_portrait.png";
+    public static string LandscapeFileName => MooveoGameHooks.AppFileName + "_bordure_paysage.png";
+    public static string PortraitFileName => MooveoGameHooks.AppFileName + "_bordure_portrait.png";
 
     private static readonly Vector2Int LandscapeSize = new Vector2Int(1800, 1200); // 4x6 à 300 dpi
     private static readonly Vector2Int PortraitSize = new Vector2Int(1200, 1800);

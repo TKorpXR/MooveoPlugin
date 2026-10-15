@@ -164,8 +164,10 @@ public static class WorldPanelUtils
     /// </summary>
     public static void CloseAllUserMenus()
     {
-        foreach (var ui in Object.FindObjectsOfType<UserUI>())
-            if (ui != null && ui.IsOpen) ui.ForceClose();
+        // Panneaux de joueur déclarés par le jeu (GraffWall : UserUI). Recherche par interface : le SDK
+        // ne connaît aucune classe de jeu (cf. MooveoGameHooks.IPlayerOwnedPanel).
+        foreach (MonoBehaviour behaviour in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            if (behaviour is MooveoGameHooks.IPlayerOwnedPanel ui && ui.IsOpen) ui.ForceClose();
     }
 
     // =====================================================================
