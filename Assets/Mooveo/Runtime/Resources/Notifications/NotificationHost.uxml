@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!--
+      Racine PLEIN ÉCRAN et transparente. Elle n'existe que pour porter la pile : rien ici ne doit
+      intercepter le curseur, d'où picking-mode="Ignore" à tous les étages. Seules les cartes, et
+      seulement quand elles portent un bouton, redeviennent cliquables (posé en C#).
+    -->
+    <ui:VisualElement name="notification-root" class="notification-root" picking-mode="Ignore">
+        <!--
+          La pile est ancrée en bas à droite et sa hauteur est AUTOMATIQUE : elle grandit donc vers
+          le haut à mesure que les cartes arrivent. La plus récente, ajoutée en dernier, reste la
+          plus proche du coin.
+        -->
+        <ui:VisualElement name="notification-stack" class="notification-stack" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

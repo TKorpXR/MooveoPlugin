@@ -1,0 +1,31 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!--
+      Une notification. Le C# ne fait que remplir les textes, poser la classe de gravité
+      (info, warning ou error) et ajouter les boutons dans `actions`.
+
+      ⚠ `details` regroupe message et boutons : c'est LUI qui se rétracte au repli, le titre restant
+      en place. Sa hauteur n'est jamais interpolée depuis `auto` (impossible en UI Toolkit) : c'est
+      `max-height` qui s'anime, cf. la feuille de style.
+
+      ⚠ Un commentaire XML ne peut PAS contenir deux tirets à la suite. Écrire ici un nom de classe
+      BEM (notification, puis deux tirets, puis info) fait échouer l'import du fichier : Unity rend
+      alors un gabarit VIDE, `Instantiate()` réussit quand même, et le C# plante sur le premier
+      élément qu'il cherche.
+    -->
+    <ui:VisualElement name="notification" class="notification" picking-mode="Ignore">
+        <ui:VisualElement name="accent" class="notification__accent" picking-mode="Ignore" />
+
+        <ui:VisualElement name="icon" class="notification__icon" picking-mode="Ignore" />
+
+        <ui:VisualElement name="body" class="notification__body" picking-mode="Ignore">
+            <ui:Label name="title" class="notification__title" picking-mode="Ignore" />
+
+            <ui:VisualElement name="details" class="notification__details" picking-mode="Ignore">
+                <ui:Label name="message" class="notification__message" picking-mode="Ignore" />
+                <ui:VisualElement name="actions" class="notification__actions" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:Button name="close" class="notification__close" text="✕" tooltip="Fermer la notification" />
+    </ui:VisualElement>
+</ui:UXML>

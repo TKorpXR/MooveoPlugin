@@ -1,0 +1,258 @@
+/*
+   Notifications — panneau SCREEN SPACE, ancré en bas à droite.
+
+   ⚠ Tout se joue ici, pas en C# : le positionnement est celui de la FENÊTRE, jamais du monde.
+   La racine couvre l'écran, la pile s'accroche au coin, et rien n'a de taille en unités monde.
+*/
+
+.notification-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/*
+   Ancrage. `bottom` + `right` suffisent : la hauteur reste automatique, la pile grandit donc vers
+   le haut. La carte la plus récente est ajoutée en DERNIER et reste collée au coin — elle pousse
+   les précédentes vers le haut.
+   (`column-reverse` donnerait l'inverse : la plus récente s'éloignerait du coin.)
+*/
+.notification-stack {
+    position: absolute;
+    right: 40px;
+    bottom: 40px;
+    /* Large : ce sont des chemins de fichiers qui s'affichent là. Plus la carte est étroite, plus
+       ils se coupent en deux lignes — c'est ce qui donnait un pavé aéré et illisible. */
+    width: 760px;
+    max-width: 46%;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+/*
+   Couche des curseurs spray redessinés DANS le panneau (cf. NotificationHost.LateUpdate).
+   ⚠ Elle est AJOUTÉE APRÈS la pile : c'est ce qui la met par-dessus les cartes. Un panneau en
+   overlay recouvre toute la scène 3D — le vrai curseur, qui vit sur un canvas world-space, ne peut
+   pas passer devant lui autrement.
+*/
+.notification-cursor-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Une image du curseur. Position, taille, sprite et teinte viennent du C# : ils sont relevés sur le
+   VRAI curseur à chaque frame, pour qu'il garde son apparence du moment (disque translucide et
+   liseré en couleur inverse en mode UI, cercle de peinture sinon, icône d'outil…).
+   ⚠ `background-size: 100% 100%` : le rectangle est déjà celui de l'image d'origine, toute autre
+   mise à l'échelle décalerait le doublon du vrai curseur. */
+.notification-cursor {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0);
+    background-size: 100% 100%;
+}
+
+/* ============================================================
+   Une carte
+   ============================================================ */
+
+.notification {
+    flex-direction: row;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 12px;
+    padding: 16px 18px;
+    background-color: rgba(26, 26, 28, 0.96);
+    border-radius: 18px;
+    overflow: hidden;
+
+    /* État de DÉPART de l'apparition : la classe --visible, posée à la frame suivante, l'anime. */
+    opacity: 0;
+    translate: 30px 0;
+    transition-property: opacity, translate;
+    transition-duration: 0.22s, 0.22s;
+    transition-timing-function: ease-out, ease-out;
+}
+
+.notification--visible {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* Liseré de gravité : la couleur se lit avant même le texte. */
+.notification__accent {
+    width: 6px;
+    align-self: stretch;
+    margin-right: 14px;
+    border-radius: 3px;
+    background-color: rgb(120, 120, 130);
+}
+
+.notification__icon {
+    width: 30px;
+    height: 30px;
+    margin-right: 14px;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.notification__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.notification__title {
+    color: rgb(255, 255, 255);
+    font-size: 20px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+/*
+   ⚠ C'est `max-height` qui s'anime, jamais `height` : une hauteur ne s'interpole pas depuis `auto`,
+   et mesurer la carte en C# pour figer sa hauteur était la source de bugs. Le plafond est
+   volontairement large — il ne sert qu'à donner un point de départ à la transition.
+
+   ⚠ Ce plafond DOIT rester au-dessus de tout contenu possible, car `overflow: hidden` le fait
+   COUPER : à 400 px, un message de quatre chemins repoussait le bouton « Résoudre » hors du cadre,
+   et l'opérateur n'avait plus aucun moyen d'agir. Ce qui est borné, c'est le MESSAGE seul
+   (ci-dessous) : les boutons restent donc toujours dans la carte, quelle que soit sa longueur.
+*/
+.notification__details {
+    max-height: 460px;
+    opacity: 1;
+    overflow: hidden;
+    transition-property: max-height, opacity;
+    transition-duration: 0.32s, 0.2s;
+}
+
+/* Le seul bloc qu'on accepte de tronquer. Le détail complet reste dans « État du système ». */
+.notification__message {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 15px;
+    margin-top: 6px;
+    max-height: 300px;
+    overflow: hidden;
+    white-space: normal;
+}
+
+.notification__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.notification__close {
+    width: 38px;
+    height: 38px;
+    margin: 0 0 0 12px;
+    flex-shrink: 0;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.08);
+    border-width: 0;
+    border-radius: 19px;
+}
+
+.notification__close:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+/* ============================================================
+   Repli : plus que la couleur, l'icône et le titre
+   ============================================================ */
+
+.notification--collapsed {
+    width: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    align-items: center;
+}
+
+.notification--collapsed .notification__details {
+    max-height: 0;
+    opacity: 0;
+}
+
+.notification--collapsed .notification__title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   Bulle d'état de joueur (Notification.Compact)
+
+   Une ligne, titre seul, à droite : pas de message ni de bouton, donc rien à replier.
+   ⚠ `align-self: flex-end` : le conteneur parent est en colonne, donc étirant — sans cela `width:
+   auto` remplirait quand même toute la largeur de la pile. La couleur de gravité reste portée par
+   l'icône, le liseré étant masqué.
+   ============================================================ */
+
+.notification--compact {
+    align-self: flex-end;
+    width: auto;
+    margin-top: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    align-items: center;
+    background-color: rgba(26, 26, 28, 0.88);
+}
+
+.notification--compact .notification__accent { display: none; }
+
+.notification--compact .notification__icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+}
+
+.notification--compact .notification__details { display: none; }
+
+.notification--compact .notification__title {
+    font-size: 15px;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   Gravité
+   ============================================================ */
+
+.notification--info .notification__accent { background-color: rgb(46, 204, 113); }
+.notification--info .notification__icon { -unity-background-image-tint-color: rgb(46, 204, 113); }
+
+.notification--warning .notification__accent { background-color: rgb(242, 156, 18); }
+.notification--warning .notification__icon { -unity-background-image-tint-color: rgb(242, 156, 18); }
+
+.notification--error .notification__accent { background-color: rgb(232, 76, 61); }
+.notification--error .notification__icon { -unity-background-image-tint-color: rgb(232, 76, 61); }
+
+/* ============================================================
+   Boutons d'une carte (action, « Ignorer… », durées)
+   ============================================================ */
+
+.notification__button {
+    height: 42px;
+    margin: 10px 8px 0 0;
+    padding: 0 16px;
+    font-size: 16px;
+    color: rgb(255, 255, 255);
+    background-color: rgba(255, 255, 255, 0.10);
+    border-width: 0;
+    border-radius: 10px;
+}
+
+.notification__button:hover {
+    background-color: rgba(255, 255, 255, 0.20);
+}
+
+.notification__button--primary { background-color: rgba(46, 204, 113, 0.30); }
+.notification__button--primary:hover { background-color: rgba(46, 204, 113, 0.45); }
+
+.notification__button--snooze { background-color: rgba(242, 156, 18, 0.25); }
+.notification__button--snooze:hover { background-color: rgba(242, 156, 18, 0.40); }
