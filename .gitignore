@@ -135,3 +135,7 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Profil matériel cuit au build par HardwareProfileBuildHook (supprimé après le build)
+Assets/Resources/HardwareProfileBaked.txt
+Assets/Resources/HardwareProfileBaked.txt.meta
