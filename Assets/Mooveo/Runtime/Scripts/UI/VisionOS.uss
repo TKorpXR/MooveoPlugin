@@ -56,62 +56,96 @@
 }
 
 .icon-back {
-    background-image: url("project://database/Assets/Resources/Icons/arrow_back.png?fileID=21300000&guid=b2dd517d81cb63646bb58362267ee83b&type=3#arrow_back");
+    background-image: resource("Icons/arrow_back");
 }
 
 .icon-close {
-    background-image: url("project://database/Assets/Resources/Icons/close.png?fileID=21300000&guid=350765ca7783cec45855f7cdcc56f2b2&type=3#close");
+    background-image: resource("Icons/close");
 }
 
 .icon-brush {
-    background-image: url("project://database/Assets/Resources/Icons/brush.png?fileID=21300000&guid=e7db57489f6d02846bb0e12c93c00f37&type=3#brush");
+    background-image: resource("Icons/brush");
 }
 
 .icon-undo {
-    background-image: url("project://database/Assets/Resources/Icons/undo.png?fileID=21300000&guid=7d1fc9f7827839f46a69cfcdba883505&type=3#undo");
+    background-image: resource("Icons/undo");
 }
 
 .icon-check {
-    background-image: url("project://database/Assets/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
+    background-image: resource("Icons/check");
 }
 
 .icon-trash {
-    background-image: url("project://database/Assets/Resources/Icons/delete.png?fileID=21300000&guid=a00a54315705a114f9957186107e129a&type=3#delete");
+    background-image: resource("Icons/delete");
 }
 
 .icon-gallery {
-    background-image: url("project://database/Assets/Resources/Icons/gallery.png?fileID=21300000&guid=aae597da5daf0304ba50d491fe3af55f&type=3#gallery");
+    background-image: resource("Icons/gallery");
 }
 
 .icon-banner {
-    background-image: url("project://database/Assets/Resources/Icons/banner.png?fileID=21300000&guid=ccdcd6502082ee6459552e4a2f92fb0b&type=3#banner");
+    background-image: resource("Icons/banner");
 }
 
 .icon-preview {
-    background-image: url("project://database/Assets/Resources/Icons/eye.png?fileID=21300000&guid=33182ccb3513b1f4796672e22a6f3ef8&type=3#eye");
+    background-image: resource("Icons/eye");
 }
 
 .icon-capture {
-    background-image: url("project://database/Assets/Resources/Icons/camera.png?fileID=21300000&guid=95a285c8479b354479a27570f269a075&type=3#camera");
+    background-image: resource("Icons/camera");
 }
 
 .icon-folder {
-    background-image: url("project://database/Assets/Resources/Icons/folder.png?fileID=21300000&guid=916e1eb062697a04a9b7660a1be98dd5&type=3#folder");
+    background-image: resource("Icons/folder");
 }
 
 .icon-print {
-    background-image: url("project://database/Assets/Resources/Icons/print.png?fileID=21300000&guid=b9fb8bf36630767478bf28f7cc4aaa53&type=3#print");
+    background-image: resource("Icons/print");
 }
 
 .icon-save {
-    background-image: url("project://database/Assets/Resources/Icons/save.png?fileID=21300000&guid=fa2ee5f200f74a6429bd08a91ed2beea&type=3#save");
+    background-image: resource("Icons/save");
+}
+
+/* Deplacer un objet pose. La croix a quatre fleches dit le geste elle-meme, la ou un engrenage
+   demandait de savoir ce qu'il recouvrait. */
+.icon-drag {
+    background-image: resource("Icons/Mooveo/drag_pan_100dp_FFFFFF_FILL0_wght400_GRAD0_opsz48");
 }
 
 .icon-refresh {
     background-image: resource("Icons/refresh");
 }
+
+/* Icones "cadrage" des boutons de capture (menu Stickers) : deux ou quatre coins en L, comme les
+   repères de cadrage de l'appareil photo iOS — un coin = deux bordures visibles sur quatre. */
+.capture-icon {
+    width: 16px;
+    height: 16px;
+    position: relative;
+}
+.capture-bracket {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-color: rgb(255, 255, 255);
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+}
+.capture-bracket--tl { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
+.capture-bracket--tr { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+.capture-bracket--bl { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; }
+.capture-bracket--br { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
 .icon-color-picker {
     background-image: resource("Icons/palett");
+}
+.icon-lock-open {
+    background-image: resource("Icons/Mooveo/unlock");
+}
+.icon-lock-closed {
+    background-image: resource("Icons/Mooveo/lock");
 }
 
 .vision-icon-button {
@@ -207,23 +241,23 @@
 }
 
 .icon-gallery {
-    background-image: url("project://database/Assets/Resources/Icons/gallery.png?fileID=21300000&guid=aae597da5daf0304ba50d491fe3af55f&type=3#gallery");
+    background-image: resource("Icons/gallery");
 }
 
 .icon-banner {
-    background-image: url("project://database/Assets/Resources/Icons/banner.png?fileID=21300000&guid=ccdcd6502082ee6459552e4a2f92fb0b&type=3#banner");
+    background-image: resource("Icons/banner");
 }
 
 .icon-preview {
-    background-image: url("project://database/Assets/Resources/Icons/eye.png?fileID=21300000&guid=33182ccb3513b1f4796672e22a6f3ef8&type=3#eye");
+    background-image: resource("Icons/eye");
 }
 
 .icon-capture {
-    background-image: url("project://database/Assets/Resources/Icons/camera.png?fileID=21300000&guid=95a285c8479b354479a27570f269a075&type=3#camera");
+    background-image: resource("Icons/camera");
 }
 
 .icon-folder {
-    background-image: url("project://database/Assets/Resources/Icons/folder.png?fileID=21300000&guid=916e1eb062697a04a9b7660a1be98dd5&type=3#folder");
+    background-image: resource("Icons/folder");
 }
 
 .sidebar-button {
@@ -335,8 +369,8 @@
 }
 
 .drag-handle {
-    width: 140px;
-    height: 10px;
+    width: 200px;
+    height: 20px;
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 10px;
     position: absolute;
@@ -346,7 +380,7 @@
 
 .drag-handle:hover {
     background-color: rgba(255, 255, 255, 0.6);
-    height: 8px;
+    height: 24px;
 }
 
 .brush-item {
@@ -430,14 +464,76 @@
     flex-shrink: 0;
     flex-grow: 0;
     -unity-background-scale-mode: scale-to-fit;
+
+    /* Même grammaire que `.background-item` : mêmes propriétés animées, même durée. Deux grilles de
+       vignettes qui ne réagissent pas pareil se lisent comme deux mécaniques différentes. */
+    border-width: 0;
     transition-duration: 0.1s;
+    transition-property: scale, background-color, border-color;
+}
+
+/* Pastille d'information sur une vignette : nombre d'etapes d'un pochoir, nombre de traces d'un
+   objet pose. Elle etait posee par le C# depuis les pochoirs a etapes mais n'avait jamais recu de
+   style — un Label nu, a cheval sur l'image. Ancree en bas, sur un fond sombre : les pochoirs sont
+   des images claires, un texte blanc nu y disparait. */
+.sticker-step-badge {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 2px 4px;
+    background-color: rgba(0, 0, 0, 0.65);
+    color: rgb(255, 255, 255);
+    font-size: 11px;
+    -unity-text-align: middle-center;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+/* Pastille « 3D » : ce pochoir porte une normale, la peinture y prendra du relief.
+
+   En HAUT A DROITE, alors que le compteur d'etapes occupe toute la bande du BAS. Les deux se
+   cumulent sur un multi-pochoir en relief, et un badge pose au meme endroit que l'autre en
+   masquerait un — or ils ne disent pas la meme chose : l'un compte les couches, l'autre annonce la
+   matiere.
+
+   Meme habillage que le compteur — disque sombre, texte blanc — parce que c'est la meme famille
+   d'information : une propriete du pochoir, lisible avant de l'avoir pose. Un badge de couleur
+   vive se lirait comme une alerte. */
+.sticker-relief-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 1px 6px;
+    background-color: rgba(0, 0, 0, 0.65);
+    color: rgb(255, 255, 255);
+    font-size: 10px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    border-radius: 8px;
 }
 
 .sticker-item:hover {
     scale: 1.05;
     background-color: rgba(255, 255, 255, 0.2);
     border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Vignette SELECTIONNEE dans l'onglet « Sur le mur ».
+
+   Reprend a l'identique `.background-item.selected` : meme agrandissement, meme fond, meme bordure
+   blanche de 3 px. Un etat « selectionne » qui ne se ressemble pas d'un menu a l'autre oblige a
+   reapprendre la meme information deux fois.
+
+   ⚠ Declaree APRES `.sticker-item:hover` : a specificite egale (une classe + une classe contre une
+   classe + une pseudo-classe), c'est l'ordre qui tranche. Placee avant, le survol aurait efface la
+   selection — on ne verrait plus ce qu'on a choisi au moment precis ou l'on vise ses boutons. */
+.sticker-item.active {
+    scale: 1.05;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-width: 3px;
+    border-color: rgb(255, 255, 255);
 }
 
 #background-list-container {
@@ -467,6 +563,13 @@
     background-color: rgba(255, 255, 255, 0.2);
     border-width: 2px;
     border-color: rgba(255, 255, 255, 0.8);
+}
+
+.background-item.selected {
+    scale: 1.05;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-width: 3px;
+    border-color: rgb(255, 255, 255);
 }
 
 .vision-radio-classic {
@@ -606,7 +709,7 @@
 }
 
 .icon-status-ok {
-    background-image: url("project://database/Assets/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
+    background-image: resource("Icons/check");
     -unity-background-image-tint-color: rgb(46, 204, 113);
 }
 
@@ -626,7 +729,7 @@
     position: absolute;
     width: 80px;
     height: 80px;
-    border-radius: 40px;
+    border-radius: 40px; /* rond : cible de calibration, PAS un bouton d'action */
     /* Border handled by C# drawing */
     background-color: rgba(0, 0, 0, 0.2);
     align-items: center;
@@ -652,7 +755,7 @@
     height: 40px;
     opacity: 0;
     -unity-background-scale-mode: scale-to-fit;
-    background-image: url("project://database/Assets/Resources/Icons/check.png?fileID=21300000&guid=63438b19780266d43af8c590bfe43c9f&type=3#check");
+    background-image: resource("Icons/check");
     -unity-background-image-tint-color: rgb(46, 204, 113);
 }
 
@@ -664,7 +767,7 @@
     border-color: rgb(255, 91, 83);
 }
 .calibration-point.error .calibration-point-icon {
-    background-image: url("project://database/Assets/Resources/Icons/close.png?fileID=21300000&guid=350765ca7783cec45855f7cdcc56f2b2&type=3#close");
+    background-image: resource("Icons/close");
     -unity-background-image-tint-color: rgb(231, 76, 60);
     opacity: 1;
 }
@@ -673,62 +776,66 @@
     /* No scale or bg color needed, drawing handles it */
 }
 
-/* Validation Buttons */
+/* Validation Buttons — même langage que les "Oui" de popup (.popup-btn-green) :
+   fond TRANSLUCIDE 0.35 -> 0.5 au hover, texte blanc gras. Seule la teinte change. */
 .btn-action-green {
     width: 200px;
     height: 80px;
-    border-radius: 40px;
-    background-color: rgb(46, 204, 113);
+    border-radius: 12px;
+    background-color: rgba(46, 204, 113, 0.35);
     font-size: 24px;
     color: white;
     -unity-font-style: bold;
-    border-width: 0;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.5); /* meme lisere blanc que les boutons de popup */
     transition-duration: 0.2s;
 }
 
 .btn-action-green:hover {
     scale: 1.05;
-    background-color: rgb(39, 174, 96);
+    background-color: rgba(46, 204, 113, 0.5);
 }
 
 .btn-action-red {
     width: 200px;
     height: 80px;
-    border-radius: 40px;
-    background-color: rgb(231, 76, 60);
+    border-radius: 12px;
+    background-color: rgba(231, 76, 60, 0.35);
     font-size: 24px;
     color: white;
     -unity-font-style: bold;
-    border-width: 0;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.5); /* meme lisere blanc que les boutons de popup */
     transition-duration: 0.2s;
 }
 
 .btn-action-red:hover {
     scale: 1.05;
-    background-color: rgb(192, 57, 43);
+    background-color: rgba(231, 76, 60, 0.5);
 }
 
 .btn-action-blue {
     width: 200px;
     height: 80px;
-    border-radius: 40px;
-    background-color: rgb(10, 132, 255);
+    border-radius: 12px;
+    background-color: rgba(10, 132, 255, 0.35);
     font-size: 24px;
     color: white;
     -unity-font-style: bold;
-    border-width: 0;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.5); /* meme lisere blanc que les boutons de popup */
     transition-duration: 0.2s;
 }
 
 .btn-action-blue:hover {
     scale: 1.05;
-    background-color: rgb(0, 110, 255);
+    background-color: rgba(10, 132, 255, 0.5);
 }
 
 .icon-cube-green {
     /* Placeholder for the cube icon if not available, simply a colored box or use a known icon */
-    background-image: url("project://database/Assets/Resources/Icons/box.png?fileID=21300000&guid=fakeguid&type=3#box"); /* Use generic if specific not found */
-    -unity-background-object-fit: cover;
+     background-image: resource("Icons/folder");
+     -unity-background-object-fit: cover;
 }
 
 /* Animations & Transitions Refactor */
@@ -741,15 +848,13 @@
     pointer-events: auto; /* Réactive les clics quand visible */
 }
 
+/* ⚠ `pointer-events` N'EXISTE PAS dans UI Toolkit (propriété CSS du web, ignorée en silence) :
+   un panneau caché par sa seule opacité reste POINTABLE, enfants compris, et avale les clics
+   destinés à ce qu'il recouvre. Le masquage du pointage se fait en C#
+   (UICalibrationToolkit.SetPanelVisibility : visibility: hidden après le fondu). */
 .animated-panel--hidden {
     opacity: 0;
     scale: 0.95; /* Léger effet de recul quand ça disparaît */
-    pointer-events: none; /* TRÈS IMPORTANT : Empêche de cliquer sur un panneau invisible */
-}
-
-/* Fix for Unity UI Toolkit: pointer-events must be explicitly none on children too if they have defaults */
-.animated-panel--hidden > * {
-    pointer-events: none;
 }
 
 
@@ -832,6 +937,21 @@
     border-right-width: 1px;
     border-bottom-color: rgba(255, 255, 255, 0.2);
     border-right-color: rgba(255, 255, 255, 0.2);
+}
+
+.tooltip-box--bottom {
+    transform-origin: top center;
+}
+
+.tooltip-box--bottom .tooltip-arrow {
+    bottom: auto;
+    top: -6px;
+    border-bottom-width: 0px;
+    border-right-width: 0px;
+    border-top-width: 1px;
+    border-left-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.2);
+    border-left-color: rgba(255, 255, 255, 0.2);
 }
 
 .controller-row {
@@ -964,8 +1084,10 @@
     flex-shrink: 0;
 }
 
+/* ============================================================
+   TOAST NOTIFICATION
+   ============================================================ */
 
-/* ===== Toast notifications (ported from Graffwall) ===== */
 .toast-container {
     position: absolute;
     bottom: 40px;
@@ -1034,4 +1156,169 @@
 
 .toast--error .toast-icon {
     -unity-background-image-tint-color: rgb(231, 76, 60);
+}
+
+.toast--warning {
+    border-color: rgba(241, 196, 15, 0.6);
+}
+
+.toast--warning .toast-icon {
+    -unity-background-image-tint-color: rgb(241, 196, 15);
+}
+
+.icon-status-warning {
+    background-image: url("project://database/Assets/Mooveo/Runtime/Textures/Icons/error_200dp_FFFFFF_FILL1_wght400_GRAD0_opsz48.png?fileID=2800000&guid=5848306bcbacaae42a36c460a1602c19&type=3#error_200dp_FFFFFF_FILL1_wght400_GRAD0_opsz48");
+}
+
+/* ============================================================
+   IOS TOGGLE
+   ============================================================ */
+
+.ios-toggle {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    height: 44px;
+    width: 100%;
+}
+
+.ios-toggle > .unity-toggle__label {
+    flex-grow: 1;
+    color: white;
+    font-size: 16px;
+    -unity-text-align: middle-left;
+    padding-right: 20px;
+    min-width: auto;
+}
+
+.ios-toggle > .unity-toggle__input {
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 50px;
+    height: 30px;
+    min-width: 50px;
+    min-height: 30px;
+    border-radius: 15px;
+    background-color: rgba(120, 120, 128, 0.32);
+    border-width: 0;
+    transition-property: background-color;
+    transition-duration: 0.2s;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 2px;
+}
+
+.ios-toggle > .unity-toggle__input:checked {
+    background-color: rgb(48, 209, 88);
+}
+
+.ios-toggle > .unity-toggle__input > .unity-toggle__checkmark {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
+    border-radius: 13px;
+    background-color: white;
+    border-width: 0;
+    margin: 0;
+    padding: 0;
+    background-image: none;
+    align-self: flex-start;
+    translate: 0 0;
+    transition-property: translate;
+    transition-duration: 0.2s;
+}
+
+.ios-toggle > .unity-toggle__input:checked > .unity-toggle__checkmark {
+    translate: 20px 0;
+    background-image: none;
+}
+
+/* Variante "confirmation" pour les boutons de popup : fond vert TRANSLUCIDE sur le
+   glass-panel (meme famille que le "Lancer" de "Calibration trouvee" et le "Oui" de la
+   generation IA — rgb(46,204,113), le vert de validation de la DA), texte BLANC gras
+   comme les autres boutons de popup. Se combine avec .sidebar-button : declare APRES
+   lui dans ce fichier pour gagner a specificite egale. */
+.popup-btn-green {
+    background-color: rgba(46, 204, 113, 0.35);
+    color: white;
+    -unity-font-style: bold;
+}
+
+.popup-btn-green:hover {
+    background-color: rgba(46, 204, 113, 0.5);
+    border-color: rgba(46, 204, 113, 0.5);
+}
+
+.popup-btn-green:active {
+    background-color: rgba(46, 204, 113, 0.65);
+}
+
+
+/* ============================================================
+   Barre de défilement fine — liste de vérification ET « État du système »
+   Le style par défaut d'UI Toolkit est celui de l'éditeur : large, grise, avec deux
+   flèches aux extrémités. Au projecteur, elle vole l'attention à la liste elle-même.
+
+   ⚠ La piste ET le curseur sont en POSITION ABSOLUE : le slider leur impose left/right,
+   des marges ne les recentrent donc pas. On fixe la même largeur et le même left aux
+   deux — seule façon de les faire coïncider quelle que soit la version d'UI Toolkit.
+
+   Partagée par la classe `.slim-scroll` : les deux documents chargent CE fichier, une seule
+   règle garantit que les deux barres restent identiques.
+   ============================================================ */
+
+/* Les flèches ne servent à rien : la liste défile seule, et au doigt. */
+#devices-list .unity-scroller__low-button,
+.slim-scroll .unity-scroller__low-button,
+#devices-list .unity-scroller__high-button,
+.slim-scroll .unity-scroller__high-button {
+    display: none;
+}
+
+#devices-list .unity-scroller,
+.slim-scroll .unity-scroller {
+    width: 10px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    margin-left: 6px;
+}
+
+/* Piste et curseur : mêmes largeur, même left, mêmes coins. */
+#devices-list .unity-base-slider__tracker,
+.slim-scroll .unity-base-slider__tracker,
+#devices-list .unity-base-slider__dragger,
+.slim-scroll .unity-base-slider__dragger {
+    width: 6px;
+    left: 2px;
+    right: auto;
+    margin: 0;
+    border-width: 0;
+    border-radius: 3px;
+}
+
+#devices-list .unity-base-slider__tracker,
+.slim-scroll .unity-base-slider__tracker {
+    top: 0;
+    bottom: 0;
+    height: auto;
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+#devices-list .unity-base-slider__dragger,
+.slim-scroll .unity-base-slider__dragger {
+    background-color: rgba(255, 255, 255, 0.32);
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+#devices-list .unity-base-slider__dragger:hover,
+.slim-scroll .unity-base-slider__dragger:hover {
+    background-color: rgba(255, 255, 255, 0.55);
 }

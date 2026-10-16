@@ -689,14 +689,27 @@ MonoBehaviour:
     Label: SteamVR
     Type: 5
     RequiresExe: 1
+    Optional: 0
   - Key: HotFolder
     Label: HotFolder
     Type: 7
     RequiresExe: 1
+    Optional: 0
+  - Key: HotFolderBanner
+    Label: Banner Setup
+    Type: 8
+    RequiresExe: 0
+    Optional: 0
+  - Key: SystemCheck
+    Label: SystemCheck
+    Type: 9
+    RequiresExe: 0
+    Optional: 0
   - Key: AnyController
     Label: AnyController
     Type: 3
     RequiresExe: 0
+    Optional: 0
   _currentState: 0
   _debugSlider: {fileID: 0}
   _debug: 0

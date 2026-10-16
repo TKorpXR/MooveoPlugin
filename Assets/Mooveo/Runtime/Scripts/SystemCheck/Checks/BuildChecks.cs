@@ -62,9 +62,24 @@ public class UiIconsCheck : SyncSystemCheck
     /// </summary>
     public static readonly List<string> Required = new List<string>
     {
+        "Icons/Mooveo/drag_pan_100dp_FFFFFF_FILL0_wght400_GRAD0_opsz48",
+        "Icons/Mooveo/lock",
+        "Icons/Mooveo/unlock",
         "Icons/arrow_back",
+        "Icons/banner",
+        "Icons/brush",
+        "Icons/camera",
         "Icons/check",
-        "Icons/close"
+        "Icons/close",
+        "Icons/delete",
+        "Icons/eye",
+        "Icons/folder",
+        "Icons/gallery",
+        "Icons/palett",
+        "Icons/print",
+        "Icons/refresh",
+        "Icons/save",
+        "Icons/undo"
     };
 
     public override string Category => CheckCategory.Build;
