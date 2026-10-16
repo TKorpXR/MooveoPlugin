@@ -126,7 +126,9 @@ public class DefaultController : MonoBehaviour
 
         _reader.ScrollChanged += HandleScroll;
 
-        _shortcutHandler.Init(_reader);
+        // Optionnel : un contrôleur de jeu n'a pas forcément de raccourcis manette.
+
+        if (_shortcutHandler != null) _shortcutHandler.Init(_reader);
     }
 
     public virtual void Unbind()
