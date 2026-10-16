@@ -10,7 +10,7 @@ public static class SettingsAccess
 {
     public static string Get(string settingName)
     {
-        ObservableSetting<string> setting = Find(settingName);
+        GlobalSettings.Core.ObservableSetting<string> setting = Find(settingName);
         return setting != null ? setting.Value : null;
     }
 
@@ -23,7 +23,7 @@ public static class SettingsAccess
     {
         error = null;
         GlobalSettings.Core.GlobalSettings settings = GlobalSettings.Core.GlobalSettings.Instance;
-        ObservableSetting<string> setting = Find(settingName);
+        GlobalSettings.Core.ObservableSetting<string> setting = Find(settingName);
         if (settings == null || setting == null)
         {
             error = $"Réglage {settingName} introuvable : la modification n'a pas pu être faite.";
@@ -46,10 +46,11 @@ public static class SettingsAccess
         return false;
     }
 
-    private static ObservableSetting<string> Find(string settingName)
+    private static GlobalSettings.Core.ObservableSetting<string> Find(string settingName)
     {
         if (string.IsNullOrEmpty(settingName) || GlobalSettings.Core.GlobalSettings.Instance == null) return null;
-        FieldInfo field = typeof(GlobalSettings.Core.GlobalSettings).GetField(settingName, BindingFlags.Public | BindingFlags.Instance);
-        return field?.GetValue(GlobalSettings.Core.GlobalSettings.Instance) as ObservableSetting<string>;
+        // Type RÉEL de l'instance : un jeu peut dériver GlobalSettings et y ajouter ses propres chemins.
+        FieldInfo field = GlobalSettings.Core.GlobalSettings.Instance.GetType().GetField(settingName, BindingFlags.Public | BindingFlags.Instance);
+        return field?.GetValue(GlobalSettings.Core.GlobalSettings.Instance) as GlobalSettings.Core.ObservableSetting<string>;
     }
 }
