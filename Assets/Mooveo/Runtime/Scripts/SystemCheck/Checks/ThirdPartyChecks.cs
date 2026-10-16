@@ -28,8 +28,9 @@ public static class ProcessChecks
 /// fermé donnaient donc le même verdict, alors que les remèdes n'ont rien à voir.
 /// </summary>
 [Preserve]
-public class HotFolderInstalledCheck : SyncSystemCheck
+public class HotFolderInstalledCheck : SyncSystemCheck, ISoftwareCheck
 {
+    public MooveoSoftware Software => MooveoSoftware.HotFolderPrint;
     public override string Category => CheckCategory.ThirdParty;
     public override string Name => "HotFolderPrint";
     public override int Order => 0;
@@ -57,8 +58,9 @@ public class HotFolderInstalledCheck : SyncSystemCheck
 /// le réécrit pas, on le rend consultable depuis « État du système », avec sa procédure illustrée.
 /// </summary>
 [Preserve]
-public class HotFolderBannerCheck : SyncSystemCheck
+public class HotFolderBannerCheck : SyncSystemCheck, ISoftwareCheck
 {
+    public MooveoSoftware Software => MooveoSoftware.HotFolderPrint;
     public override string Category => CheckCategory.ThirdParty;
     public override string Name => "Bordures d'impression";
     public override int Order => 10;
@@ -82,8 +84,9 @@ public class HotFolderBannerCheck : SyncSystemCheck
 /// un oubli de l'opérateur.
 /// </summary>
 [Preserve]
-public class BannerTemplatesCheck : SyncSystemCheck
+public class BannerTemplatesCheck : SyncSystemCheck, ISoftwareCheck
 {
+    public MooveoSoftware Software => MooveoSoftware.HotFolderPrint;
     public override string Category => CheckCategory.ThirdParty;
     public override string Name => "Gabarits de bordure";
     public override int Order => 20;
@@ -113,8 +116,9 @@ public class BannerTemplatesCheck : SyncSystemCheck
 }
 
 [Preserve]
-public class EosUtilityCheck : SyncSystemCheck
+public class EosUtilityCheck : SyncSystemCheck, ISoftwareCheck
 {
+    public MooveoSoftware Software => MooveoSoftware.EosUtility;
     public override string Category => CheckCategory.ThirdParty;
     public override string Name => "EOS Utility";
     public override int Order => 30;
@@ -148,8 +152,9 @@ public class EosUtilityCheck : SyncSystemCheck
 }
 
 [Preserve]
-public class SteamVrCheck : SyncSystemCheck
+public class SteamVrCheck : SyncSystemCheck, ISoftwareCheck
 {
+    public MooveoSoftware Software => MooveoSoftware.SteamVR;
     public override string Category => CheckCategory.ThirdParty;
     public override string Name => "SteamVR";
     public override int Order => 40;
@@ -187,8 +192,9 @@ public class SteamVrCheck : SyncSystemCheck
 /// VISIBLE un échec de cette correction (droits, SteamVR impossible à fermer) et propose de la refaire.
 /// </summary>
 [Preserve]
-public class SteamVrConfigCheck : SyncSystemCheck
+public class SteamVrConfigCheck : SyncSystemCheck, ISoftwareCheck
 {
+    public MooveoSoftware Software => MooveoSoftware.SteamVR;
     public override string Category => CheckCategory.ThirdParty;
     public override string Name => "Configuration SteamVR";
     public override int Order => 41;

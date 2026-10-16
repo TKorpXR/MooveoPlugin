@@ -17,6 +17,9 @@ using UnityEngine.UIElements;
 ///
 /// Brancher au plus tôt (Awake d'un manager de jeu), et débrancher à sa destruction : ces champs
 /// sont statiques, ils survivent aux changements de scène.
+///
+/// Vérifications de logiciels tiers (SteamVR, HotFolderPrint, EOS Utility) : opt-in, cf.
+/// <see cref="MooveoSoftwareChecks"/>.
 /// </summary>
 public static class MooveoGameHooks
 {

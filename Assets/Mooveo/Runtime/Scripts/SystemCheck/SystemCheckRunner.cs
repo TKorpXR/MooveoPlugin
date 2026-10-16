@@ -129,7 +129,7 @@ public class SystemCheckRunner : MonoBehaviour
     /// un verdict absent vaut mieux qu'un rouge permanent qui ne veut rien dire.
     /// </summary>
     private static bool Selected(ISystemCheck check, CheckScope scope, bool essentialOnly)
-        => (check.Scope & scope) != 0 && (!essentialOnly || check.Essential);
+        => (check.Scope & scope) != 0 && (!essentialOnly || check.Essential) && MooveoSoftwareChecks.Allows(check);
 
     private IEnumerator RunAllCo()
     {
@@ -140,7 +140,7 @@ public class SystemCheckRunner : MonoBehaviour
         var selected = new List<ISystemCheck>();
         foreach (ISystemCheck check in all)
         {
-            bool wanted = only != null ? only.Contains(check.Name) : Selected(check, _scope, _essentialOnly);
+            bool wanted = only != null ? only.Contains(check.Name) && MooveoSoftwareChecks.Allows(check) : Selected(check, _scope, _essentialOnly);
             if (wanted) selected.Add(check);
         }
 

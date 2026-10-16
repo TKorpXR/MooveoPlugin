@@ -129,8 +129,9 @@ public class ExportPathCheck : SyncSystemCheck
 }
 
 [Preserve]
-public class PrintPathCheck : SyncSystemCheck
+public class PrintPathCheck : SyncSystemCheck, ISoftwareCheck
 {
+    public MooveoSoftware Software => MooveoSoftware.HotFolderPrint;
     public override string Category => CheckCategory.Configuration;
     public override string Name => "Dossier d'impression";
     public override int Order => 20;

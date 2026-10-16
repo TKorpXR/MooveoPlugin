@@ -524,13 +524,15 @@ public class CalibrationManager : MonoBehaviour
     public virtual void Init()
     {
         MooveoConfigManager.EndMouseTest();
+        // Impression : seulement si le jeu l'utilise (cf. MooveoSoftwareChecks — opt-in).
+        bool usesHotFolder = MooveoSoftwareChecks.IsEnabled(MooveoSoftware.HotFolderPrint);
         // AVANT la calibration : les bordures de HotFolder portent un identifiant propre à chaque
         // poste, les réglages livrés sont donc toujours faux ailleurs qu'ici.
-        HotFolderLocator.ApplyTo(GlobalSettings.Core.GlobalSettings.Instance);
+        if (usesHotFolder) HotFolderLocator.ApplyTo(GlobalSettings.Core.GlobalSettings.Instance);
         // Les gabarits à importer dans HotFolderPrint sont écrits d'office, sans attendre qu'un
         // défaut soit détecté : en build, sur un poste neuf, l'opérateur doit les trouver dans
         // Import/HotFolder même s'il n'a jamais ouvert le menu d'impression.
-        HotFolderBannerTemplate.EnsureAll();
+        if (usesHotFolder) HotFolderBannerTemplate.EnsureAll();
         // ⚠ Plus de popup dédiée ICI : la bannière est devenue une vérification comme les autres,
         // et c'est le bilan de fin de campagne qui l'annonce, avec sa procédure illustrée. Deux
         // popups qui s'enchaînent, l'une remplaçant l'autre, ne s'expliquaient pas.

@@ -1,5 +1,23 @@
 # Changelog — Mooveo SDK
 
+## [1.2.1] — 2026-10-16
+
+### Modifié
+- **Vérifications de logiciels tiers en opt-in** (`MooveoSoftwareChecks`). Aucune n'est active
+  par défaut : un jeu déclare au démarrage les logiciels qu'il utilise —
+  `MooveoSoftwareChecks.Enable(MooveoSoftware.SteamVR | MooveoSoftware.EosUtility)`.
+  Logiciels fournis : SteamVR (présence + configuration), HotFolderPrint (installation, bordures,
+  gabarits, dossier d'impression), EOS Utility (installation, lancement, dossier photo).
+- HotFolderPrint désactivé : plus de détection ni d'écriture de gabarits au démarrage de la
+  calibration.
+- Logiciel propre au jeu : écrire sa propre vérification (`SyncSystemCheck`) dans le jeu,
+  découverte et active d'office ; « Résoudre » via `SoftwareInfo` + `MissingSoftwareRepair` /
+  `LaunchSoftwareRepair`.
+
+### Migration depuis 1.2.0
+- Un jeu qui comptait sur ces vérifications doit les activer (`RuntimeInitializeLoadType.BeforeSceneLoad`).
+  Les lignes natives de la liste de calibration (types SteamVR, HotFolder…) restent pilotées par la scène.
+
 ## [1.2.0] — 2026-10-16
 
 Synchronisation avec le système de GraffWall V3 : tout ce qui relève du système (calibration,
