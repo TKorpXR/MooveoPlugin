@@ -1167,7 +1167,7 @@
 }
 
 .icon-status-warning {
-    background-image: url("project://database/Assets/Mooveo/Runtime/Textures/Icons/error_200dp_FFFFFF_FILL1_wght400_GRAD0_opsz48.png?fileID=2800000&guid=5848306bcbacaae42a36c460a1602c19&type=3#error_200dp_FFFFFF_FILL1_wght400_GRAD0_opsz48");
+    background-image: url("../../Textures/Icons/error_200dp_FFFFFF_FILL1_wght400_GRAD0_opsz48.png");
 }
 
 /* ============================================================

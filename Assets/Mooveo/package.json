@@ -1,6 +1,6 @@
 {
   "name": "com.bl0bli.mooveo",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "unity": "6000.0",
   "displayName": "Mooveo SDK",
   "description": "Système de tracking, calibration, profils matériel SteamVR (Vive Trackers / PICO 4 Enterprise), vérifications de démarrage, réparations et notifications pour espaces interactifs 2D/3D.",

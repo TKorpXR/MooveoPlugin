@@ -17,6 +17,10 @@ public abstract class CalibrationManagerBase: MonoBehaviour
     public float PlayAreaWidth { get; protected set; }
     public float PlayAreaHeight { get; protected set; }
     public Vector3 PlayAreaForward { get; protected set; }
+    /// <summary>Axe horizontal « droite » de la zone de jeu (du point gauche vers le point droit), espace de suivi.</summary>
+    public Vector3 PlayAreaRight { get; protected set; } = Vector3.right;
+    /// <summary>Vrai quand une calibration exploitable a été calculée (3 points, zone non dégénérée).</summary>
+    public bool HasPlayArea { get; protected set; }
 
     private void Start()
     {
@@ -42,8 +46,43 @@ public abstract class CalibrationManagerBase: MonoBehaviour
     }
     
 
+    /// <summary>
+    /// Charge la calibration ENREGISTRÉE (scène de setup) et l'applique. Faux si elle est absente ou
+    /// inexploitable — le jeu doit alors renvoyer vers la scène de calibration.
+    /// </summary>
+    public bool LoadSaved()
+    {
+        HasPlayArea = false;
+        MooveoConfig config = MooveoConfigManager.Load();
+        if (config == null || config.Points == null || config.Points.Count < 3) return false;
+        Init(config);
+        return HasPlayArea;
+    }
+
+    /// <summary>
+    /// Point de la zone de jeu visé par un rayon (manette, tracker), en coordonnées NORMALISÉES :
+    /// (0,0) en bas à gauche, (1,1) en haut à droite — hors de [0,1] si le rayon vise à côté du mur.
+    /// Pour un point d'écran : <c>Vector2.Scale(viewport, new Vector2(Screen.width, Screen.height))</c>.
+    /// Faux sans calibration, ou si le rayon ne coupe pas le plan du mur devant lui.
+    /// </summary>
+    public bool TryProjectRay(Vector3 origin, Vector3 direction, out Vector2 viewport)
+    {
+        viewport = default;
+        if (!HasPlayArea) return false;
+
+        var ray = new Ray(origin, direction);
+        if (!new Plane(Vector3.Cross(PlayAreaRight, Vector3.up), PlayAreaCenter).Raycast(ray, out float distance))
+            return false;
+
+        Vector3 offset = ray.GetPoint(distance) - PlayAreaCenter;
+        viewport = new Vector2(0.5f + Vector3.Dot(offset, PlayAreaRight) / PlayAreaWidth,
+                               0.5f + offset.y / PlayAreaHeight);
+        return true;
+    }
+
     protected bool CalculatePlayAreaMaths()
     {
+        HasPlayArea = false;
         if (_points == null || _points.Count < 3)
         {
             if (_points != null)
@@ -78,7 +117,15 @@ public abstract class CalibrationManagerBase: MonoBehaviour
         }
 
         PlayAreaRotation = Quaternion.LookRotation(-PlayAreaForward, Vector3.up);
-        
+
+        // Axe horizontal du mur, utilisé par TryProjectRay. Zone dégénérée (points confondus ou
+        // verticaux) : on la refuse plutôt que de projeter n'importe où.
+        Vector3 horizontal = right - left;
+        horizontal.y = 0f;
+        if (horizontal.sqrMagnitude < 0.0001f || PlayAreaWidth < 0.01f || PlayAreaHeight < 0.01f) return false;
+        PlayAreaRight = horizontal.normalized;
+        HasPlayArea = true;
+
         return true;
     }
     protected Vector3 CalculateCenter(List<Vector3> points, out int centerIndex)

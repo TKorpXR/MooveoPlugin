@@ -1,5 +1,33 @@
 # Changelog — Mooveo SDK
 
+## [1.3.0] — 2026-10-19
+
+Ajouts demandés par Mooveo Rafting : ce que le jeu faisait par réflexion ou recopiait du SDK.
+
+### Ajouté
+- **Projection d'un rayon sur l'écran calibré** : `CalibrationManagerBase.TryProjectRay(origin, direction, out viewport)`,
+  plus `PlayAreaRight`, `HasPlayArea` et `LoadSaved()` (charge la calibration enregistrée sans scène de calibration).
+- **`MooveoPlayArea`** : zone de jeu calibrée sans effet de bord (aucune calibration appliquée), pour les menus et
+  les jeux qui ne font que viser l'écran.
+- **Publication des poses OpenVR** : `SteamVR_Standalone.PublishPoses(poses)` et `PublishCurrentPoses(origin)`,
+  pour diffuser les poses aux `SteamVR_Tracker` quand l'affichage XR est coupé (headless), sans réflexion.
+- **Routage des manettes** (`MooveoDeviceRouting`) : `IsHeadless`, `TryGetHand` (main gauche / droite ou raison du
+  refus), `ConfigureTracking`, `EnsureOpenVRPoseSource`.
+- **Suivi des arrivées / départs** (`MooveoDeviceWatcher`) : événements `Joined(device, isLeft)`, `Left(device)`,
+  `Rejected(device, raison)`, filtrés par profil matériel.
+
+### Modifié
+- `MooveoDeviceManager` ignore les périphériques que le profil matériel rejette (`HardwareDeviceRouting.Rejects`).
+- `SteamVR_Standalone` publie ses poses sur `RenderPipelineManager.beginContextRendering` (API non obsolète).
+
+### Corrigé
+- `ToolInputdDebugger.uxml` et `VisionOS.uss` référençaient des chemins absolus d'un autre projet
+  (erreur d'import dans les jeux).
+
+### Migration depuis 1.2.1
+- Une calibration dégénérée (gauche et droite confondues) fait désormais échouer `CalculatePlayAreaMaths`
+  (`HasPlayArea` reste faux) au lieu de produire une zone nulle.
+
 ## [1.2.1] — 2026-10-16
 
 ### Modifié
