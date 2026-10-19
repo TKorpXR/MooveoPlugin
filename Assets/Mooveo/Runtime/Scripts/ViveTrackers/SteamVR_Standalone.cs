@@ -17,10 +17,8 @@ public class SteamVR_Standalone : MonoBehaviour {
     public static void PublishPoses(TrackedDevicePose_t[] devicePoses) => OnNewPose?.Invoke(devicePoses);
 
     /// <summary>
-    /// Lit les poses ACTUELLES directement dans OpenVR (sans passer par le compositeur) et les diffuse.
-    /// ⚠ À utiliser quand l'affichage XR est coupé (écran seul, mode headless) : le compositeur ne
-    /// rafraîchit plus ses poses, <c>GetLastPoses</c> rendrait des poses figées. Dans ce cas, désactiver
-    /// ce composant et appeler cette méthode à chaque frame. Faux si OpenVR n'est pas initialisé.
+    /// Lit les poses dans OpenVR et les diffuse. Affichage XR coupé (headless) : le compositeur les fige,
+    /// désactiver ce composant et appeler ceci à chaque frame. Faux si OpenVR n'est pas initialisé.
     /// </summary>
     public static bool PublishCurrentPoses(ETrackingUniverseOrigin origin = ETrackingUniverseOrigin.TrackingUniverseStanding)
     {

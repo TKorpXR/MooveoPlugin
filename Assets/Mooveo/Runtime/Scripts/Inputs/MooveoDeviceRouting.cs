@@ -5,10 +5,8 @@ using UnityEngine.InputSystem.XR;
 using Valve.VR;
 
 /// <summary>
-/// Quels appareils deviennent des joueurs selon le profil matériel courant, et quelle source suit
-/// leur position. Règles communes à tout ce qui crée un joueur depuis un appareil (menu, spawner du
-/// jeu) — à consommer de préférence via <see cref="MooveoDeviceWatcher"/>.
-/// Ce qui ne dépend QUE du profil reste dans <see cref="HardwareDeviceRouting"/>.
+/// Quels appareils deviennent des joueurs selon le profil matériel, et quelle source suit leur position.
+/// Usage courant : via <see cref="MooveoDeviceWatcher"/>.
 /// </summary>
 public static class MooveoDeviceRouting
 {
@@ -17,9 +15,8 @@ public static class MooveoDeviceRouting
         GlobalSettings.Core.GlobalSettings.Instance != null && GlobalSettings.Core.GlobalSettings.Instance.Headless.Value;
 
     /// <summary>
-    /// Vrai si l'appareil peut devenir un joueur avec le profil matériel courant ; donne sa main.
-    /// <paramref name="rejectReason"/> est renseigné quand l'appareil est écarté pour une raison utile
-    /// à journaliser (null pour ce qui n'est simplement pas un contrôleur : casque, stations…).
+    /// Vrai si l'appareil peut jouer, avec sa main. <paramref name="rejectReason"/> n'est renseigné
+    /// que pour un contrôleur refusé par le profil (null pour un casque, une station…).
     /// </summary>
     public static bool TryGetHand(InputDevice device, out bool isLeftHand, out string rejectReason)
     {
@@ -62,10 +59,8 @@ public static class MooveoDeviceRouting
     }
 
     /// <summary>
-    /// Branche UNE seule source de position sur la racine du contrôleur : TrackedPoseDriver alimenté
-    /// par la config de la main (OpenXR), ou SteamVR_Tracker retrouvé par numéro de série (Headless,
-    /// lecture des boutons en OVRInput). Les deux composants doivent être présents sur l'instance ;
-    /// celui qui ne sert pas est désactivé.
+    /// Active une seule source de position : TrackedPoseDriver (OpenXR) ou SteamVR_Tracker (headless).
+    /// L'instance doit porter les deux ; l'autre est désactivé.
     /// </summary>
     public static void ConfigureTracking(GameObject instance, InputReader reader, InputDevice device, bool isLeftHand,
         InputConfig leftConfig, InputConfig rightConfig)
@@ -109,11 +104,7 @@ public static class MooveoDeviceRouting
         }
     }
 
-    /// <summary>
-    /// Sans source de poses OpenVR, les SteamVR_Tracker ne bougent pas : crée un SteamVR_Standalone
-    /// s'il manque (un jeu qui publie lui-même les poses, cf. <see cref="SteamVR_Standalone.PublishCurrentPoses"/>,
-    /// garde le sien désactivé — il existe, il n'est donc pas recréé).
-    /// </summary>
+    /// <summary>Crée un SteamVR_Standalone s'il manque : sans lui, les SteamVR_Tracker ne bougent pas.</summary>
     public static void EnsureOpenVRPoseSource()
     {
         if (SteamVR_Standalone.Instance != null) return;

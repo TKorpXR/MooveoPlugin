@@ -3,39 +3,25 @@ using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Suit les appareils qui peuvent devenir des joueurs avec le profil matériel courant
-/// (<see cref="MooveoDeviceRouting.TryGetHand"/>) et annonce leurs arrivées et départs. Remplace, dans
-/// un menu ou un spawner, l'abonnement à <c>InputSystem.onDeviceChange</c> et son tri.
-/// <code>
-/// _watcher = new MooveoDeviceWatcher();
-/// _watcher.Joined += (device, isLeftHand) => …;   // brancher AVANT Start
-/// _watcher.Left += device => …;
-/// _watcher.Start();                               // annonce aussi les appareils déjà branchés
-/// …
-/// _watcher.Dispose();                             // OnDisable / OnDestroy
-/// </code>
+/// Annonce l'arrivée et le départ des appareils qui peuvent jouer avec le profil matériel courant.
+/// S'abonner aux événements avant <see cref="Start"/>, appeler <see cref="Dispose"/> en OnDisable.
 /// </summary>
 public sealed class MooveoDeviceWatcher : IDisposable
 {
     private readonly Dictionary<InputDevice, bool> _devices = new Dictionary<InputDevice, bool>();
     private bool _running;
 
-    /// <summary>Un appareil peut jouer ; le booléen vaut vrai pour la main gauche.</summary>
+    /// <summary>Un appareil peut jouer ; vrai pour la main gauche.</summary>
     public event Action<InputDevice, bool> Joined;
-
-    /// <summary>Un appareil annoncé par <see cref="Joined"/> est parti (débranché, désactivé).</summary>
     public event Action<InputDevice> Left;
-
-    /// <summary>Un contrôleur a été écarté par le profil matériel, avec la raison (à journaliser).</summary>
+    /// <summary>Contrôleur refusé par le profil matériel, avec la raison.</summary>
     public event Action<InputDevice, string> Rejected;
 
-    /// <summary>Appareils actuellement suivis, avec leur main (vrai = gauche).</summary>
+    /// <summary>Appareils suivis, avec leur main (vrai = gauche).</summary>
     public IReadOnlyDictionary<InputDevice, bool> Devices => _devices;
-
-    /// <summary>Nombre d'appareils actuellement suivis.</summary>
     public int Count => _devices.Count;
 
-    /// <summary>Commence le suivi et annonce les appareils déjà branchés. Sans effet si déjà démarré.</summary>
+    /// <summary>Commence le suivi et annonce les appareils déjà branchés.</summary>
     public void Start()
     {
         if (_running) return;
@@ -44,7 +30,7 @@ public sealed class MooveoDeviceWatcher : IDisposable
         foreach (InputDevice device in InputSystem.devices) TryJoin(device);
     }
 
-    /// <summary>Arrête le suivi et oublie les appareils, SANS émettre <see cref="Left"/>.</summary>
+    /// <summary>Arrête le suivi et oublie les appareils, sans émettre <see cref="Left"/>.</summary>
     public void Dispose()
     {
         if (!_running) return;

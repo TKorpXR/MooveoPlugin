@@ -17,9 +17,8 @@ public abstract class CalibrationManagerBase: MonoBehaviour
     public float PlayAreaWidth { get; protected set; }
     public float PlayAreaHeight { get; protected set; }
     public Vector3 PlayAreaForward { get; protected set; }
-    /// <summary>Axe horizontal « droite » de la zone de jeu (du point gauche vers le point droit), espace de suivi.</summary>
     public Vector3 PlayAreaRight { get; protected set; } = Vector3.right;
-    /// <summary>Vrai quand une calibration exploitable a été calculée (3 points, zone non dégénérée).</summary>
+    /// <summary>Vrai quand une calibration exploitable a été calculée.</summary>
     public bool HasPlayArea { get; protected set; }
 
     private void Start()
@@ -46,10 +45,7 @@ public abstract class CalibrationManagerBase: MonoBehaviour
     }
     
 
-    /// <summary>
-    /// Charge la calibration ENREGISTRÉE (scène de setup) et l'applique. Faux si elle est absente ou
-    /// inexploitable — le jeu doit alors renvoyer vers la scène de calibration.
-    /// </summary>
+    /// <summary>Charge et applique la calibration enregistrée. Faux si elle est absente ou inexploitable.</summary>
     public bool LoadSaved()
     {
         HasPlayArea = false;
@@ -60,10 +56,8 @@ public abstract class CalibrationManagerBase: MonoBehaviour
     }
 
     /// <summary>
-    /// Point de la zone de jeu visé par un rayon (manette, tracker), en coordonnées NORMALISÉES :
-    /// (0,0) en bas à gauche, (1,1) en haut à droite — hors de [0,1] si le rayon vise à côté du mur.
-    /// Pour un point d'écran : <c>Vector2.Scale(viewport, new Vector2(Screen.width, Screen.height))</c>.
-    /// Faux sans calibration, ou si le rayon ne coupe pas le plan du mur devant lui.
+    /// Point du mur visé par un rayon, normalisé : (0,0) bas gauche, (1,1) haut droit, hors de [0,1] à côté.
+    /// Faux sans calibration ou si le rayon ne coupe pas le mur.
     /// </summary>
     public bool TryProjectRay(Vector3 origin, Vector3 direction, out Vector2 viewport)
     {
@@ -118,8 +112,7 @@ public abstract class CalibrationManagerBase: MonoBehaviour
 
         PlayAreaRotation = Quaternion.LookRotation(-PlayAreaForward, Vector3.up);
 
-        // Axe horizontal du mur, utilisé par TryProjectRay. Zone dégénérée (points confondus ou
-        // verticaux) : on la refuse plutôt que de projeter n'importe où.
+        // Zone dégénérée (points confondus ou alignés verticalement) : refusée.
         Vector3 horizontal = right - left;
         horizontal.y = 0f;
         if (horizontal.sqrMagnitude < 0.0001f || PlayAreaWidth < 0.01f || PlayAreaHeight < 0.01f) return false;

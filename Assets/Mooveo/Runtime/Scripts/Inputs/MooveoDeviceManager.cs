@@ -78,7 +78,7 @@ public class MooveoDeviceManager : MonoBehaviour
         // On ne gère que les appareils de Tracking (Manettes ou Vive Trackers)
         if (!(device is TrackedDevice)) return;
 
-        // Profil matériel : en PICO, seule une manette main gauche ou droite peut jouer (cf. HardwareDeviceRouting).
+        // Profil PICO : seule une manette gauche ou droite peut jouer.
         if (HardwareDeviceRouting.Rejects(device, out string rejectReason))
         {
             Debug.Log($"<color=yellow>[Mooveo SDK]</color> {device.name} écarté : {rejectReason}.");
