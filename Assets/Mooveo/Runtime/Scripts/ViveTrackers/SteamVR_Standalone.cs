@@ -17,8 +17,9 @@ public class SteamVR_Standalone : MonoBehaviour {
     public static void PublishPoses(TrackedDevicePose_t[] devicePoses) => OnNewPose?.Invoke(devicePoses);
 
     /// <summary>
-    /// Lit les poses dans OpenVR et les diffuse. Affichage XR coupé (headless) : le compositeur les fige,
-    /// désactiver ce composant et appeler ceci à chaque frame. Faux si OpenVR n'est pas initialisé.
+    /// Lit les poses dans OpenVR et les diffuse, sans passer par le compositeur. Faux si OpenVR n'est pas initialisé.
+    /// ⚠ Ne pas couper l'affichage XR en headless : SteamVR n'identifie plus le jeu. Retirer plutôt le miroir de la
+    /// fenêtre (<c>XRSettings.gameViewRenderMode = None</c>).
     /// </summary>
     public static bool PublishCurrentPoses(ETrackingUniverseOrigin origin = ETrackingUniverseOrigin.TrackingUniverseStanding)
     {

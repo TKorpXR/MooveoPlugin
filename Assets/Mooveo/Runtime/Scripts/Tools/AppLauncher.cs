@@ -32,7 +32,9 @@ public static class AppLauncher
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = path;
             startInfo.WorkingDirectory = Path.GetDirectoryName(path);
-            
+            // ⚠ Sans shell : en IL2CPP, ShellExecute échoue (exception « Success ») et SteamVR ne se lançait pas.
+            startInfo.UseShellExecute = false;
+
             Process process = Process.Start(startInfo);
 
             if (process == null) return false;

@@ -1,0 +1,134 @@
+/* Apparence par défaut de l'étape de positionnement (Mooveo.Positioning).
+   Un jeu la complète par PlayAreaPreviewStyle.StyleSheet, ou la remplace (ReplaceDefaultStyleSheet).
+   ⚠ Ne jamais combiner coins arrondis et overflow: hidden (découpe par stencil, fausse avec l'affichage XR actif). */
+
+.mooveo-positions {
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.mooveo-positions__view {
+    width: 900px;
+    flex-shrink: 0;
+    border-width: 4px;
+    border-color: rgba(255, 255, 255, 0.35);
+    border-radius: 24px;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.mooveo-positions__overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.mooveo-positions__wall-label {
+    position: absolute;
+    translate: -50% -100%;
+    font-size: 22px;
+    color: rgba(255, 255, 255, 0.85);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+}
+
+.mooveo-positions__tag {
+    position: absolute;
+    translate: -50% -100%;
+    min-width: 60px;
+    padding: 0 8px;
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    border-width: 3px;
+    border-color: rgb(255, 255, 255);
+    border-radius: 12px;
+}
+
+.mooveo-positions__tag--refused {
+    border-color: rgb(255, 140, 51);
+}
+
+.mooveo-positions__cards {
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 14px;
+    flex-shrink: 0;
+}
+
+.mooveo-positions__card {
+    width: 270px;
+    margin: 0 8px;
+    padding: 8px 10px;
+    align-items: center;
+    flex-shrink: 0;
+    background-color: rgba(18, 26, 51, 0.92);
+    border-width: 4px;
+    border-color: rgba(255, 255, 255, 0.3);
+    border-radius: 18px;
+}
+
+.mooveo-positions__card--locked {
+    border-color: rgb(64, 204, 102);
+}
+
+.mooveo-positions__card--refused {
+    border-color: rgb(255, 140, 51);
+}
+
+.mooveo-positions__card--untracked {
+    opacity: 0.6;
+}
+
+.mooveo-positions__card-name {
+    font-size: 26px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    padding: 0 12px;
+    border-radius: 10px;
+}
+
+.mooveo-positions__card-status {
+    margin-top: 6px;
+    font-size: 19px;
+    color: rgb(255, 255, 255);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.mooveo-positions__card--locked .mooveo-positions__card-status {
+    color: rgb(64, 204, 102);
+}
+
+.mooveo-positions__card--refused .mooveo-positions__card-status {
+    color: rgb(255, 140, 51);
+}
+
+.mooveo-positions__card-detail {
+    margin-top: 2px;
+    font-size: 19px;
+    color: rgb(64, 204, 102);
+    -unity-text-align: middle-center;
+}
+
+.mooveo-positions__gauge {
+    display: none;
+    width: 80%;
+    height: 8px;
+    margin-top: 6px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.mooveo-positions__card--auto .mooveo-positions__gauge {
+    display: flex;
+}
+
+.mooveo-positions__gauge-fill {
+    width: 0;
+    height: 100%;
+    background-color: rgb(64, 204, 102);
+    border-radius: 4px;
+}

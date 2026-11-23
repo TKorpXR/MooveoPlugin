@@ -1,5 +1,34 @@
 # Changelog — Mooveo SDK
 
+## [1.4.0] — 2026-11-23
+
+### Ajouté
+- **Positions des joueurs** (`Runtime/Positioning`, assembly `Mooveo.Positioning`, namespace `Mooveo.Positioning`), repris
+  de Mooveo Rafting : chaque joueur se place, tient sa manette ou son tracker immobile et valide à la gâchette.
+  - Données : `PlayAreaSpace` (repère de l'écran calibré), sources `TrackedPointerSource` / `DelegatePointerSource` /
+    `SimulatedPointerSource`, `CaptureSettings` + `PositionCapture` (validation, refus si l'appareil bouge, validation
+    automatique en option), `PositionSession` + `Participant`, `LateralOrdering` (classement gauche → droite).
+  - Aperçu 3D des manettes : `PlayAreaPreview` (studio rendu dans une texture, sur un calque dédié caché aux autres
+    caméras ; chaque appareil à sa pose réelle avec rayon, impact sur l'écran et anneau au sol), apparence
+    `PlayAreaPreviewStyle` (modèle par profil matériel : prefab ou modèles intégrés manette PICO / tracker Vive).
+  - Interface UI Toolkit `PlayAreaPreviewElement` (feuille par défaut `Resources/MooveoPositioning/PlayAreaPreview.uss`,
+    classes `.mooveo-positions__*`) et écran prêt à l'emploi `PositionFlow` (`Open` / `Close`, marche aussi en pause).
+  - Tests : `Mooveo.Positioning.Tests` (EditMode, 18) et `Mooveo.Positioning.PlayModeTests` (3) ; pour les lancer
+    depuis un jeu, ajouter `"testables": ["com.bl0bli.mooveo"]` à son manifest.
+- URP facultatif : sans `com.unity.render-pipelines.universal`, la caméra de l'aperçu n'est simplement pas réglée pour
+  URP (define `MOOVEO_URP`) et le calque est masqué via `Camera.onPreCull`.
+
+### Corrigé
+- **Lancement de SteamVR en IL2CPP** : `AppLauncher.LaunchProcess` démarre le processus sans shell
+  (`UseShellExecute = false`). En IL2CPP, `ShellExecute` échouait (exception « Success ») : SteamVR, HotFolderPrint et
+  EOS Utility ne se lançaient pas, et la vérification « SteamVR » restait en échec. Les builds Mono n'étaient pas touchés.
+- Doc de `SteamVR_Standalone.PublishCurrentPoses` : ne plus conseiller de couper l'affichage XR en headless (SteamVR
+  n'identifie alors plus le jeu dans le casque) ; retirer plutôt le miroir de la fenêtre (`XRSettings.gameViewRenderMode`).
+
+### Migration (jeu qui avait sa copie du module, comme Rafting)
+- Supprimer la copie locale (`Scripts/Mooveo/Positioning/`) en même temps que la montée de version : mêmes noms de
+  classes, mêmes GUID de scripts — les assets de style existants pointent alors sur ceux du SDK sans retouche.
+
 ## [1.3.0] — 2026-10-19
 
 Ajouts demandés par Mooveo Rafting : ce que le jeu faisait par réflexion ou recopiait du SDK.
